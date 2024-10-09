@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:kahel/pages/financials/transfer_confirmation.dart';
 import '../../api/auth.dart';
 import '../../constants/borders.dart';
 import '../../constants/colors.dart';
@@ -22,30 +23,73 @@ class _TransferMoneyPageState extends State<TransferMoneyPage> {
   TextEditingController accountNumber = TextEditingController();
   TextEditingController amountController = TextEditingController();
   TextEditingController notesController = TextEditingController();
-  String transactionFee = "0";
+  String transactionFee = "10.00"; // Set a default transaction fee
 
   final _formKey = GlobalKey<FormState>();
   User? user;
 
   @override
   void initState() {
-    user = getUser();
     super.initState();
+    user = getUser();
   }
 
-  Future<bool> checkIfAccountExists(String accountNumber) async {
+  Future<Map<String, dynamic>?> fetchAccountDetails(String accountNumber) async {
     try {
       final snapshot = await FirebaseFirestore.instance
           .collection('linked_accounts')
           .where('accountNumber', isEqualTo: accountNumber)
           .get();
 
-      return snapshot.docs.isNotEmpty;
+      if (snapshot.docs.isNotEmpty) {
+        return snapshot.docs.first.data();
+      } else {
+        return null;
+      }
     } catch (e) {
       print('Error fetching linked account: $e');
-      return false;
+      return null;
     }
   }
+
+  Future<String?> fetchRecipientUid(String uid) async {
+    try {
+      final snapshot = await FirebaseFirestore.instance
+          .collection('linked_accounts') // Replace with your users collection name
+          .where('uid', isEqualTo: uid)
+          .get();
+
+      if (snapshot.docs.isNotEmpty) {
+        return snapshot.docs.first.id; // This is the recipient UID
+      } else {
+        return null;
+      }
+    } catch (e) {
+      print('Error fetching recipient UID: $e');
+      return null;
+    }
+  }
+
+  Future<String?> fetchRecipientEmail(String recipientUid) async {
+    try {
+      // Fetch the recipient's document from the 'users' collection using their UID
+      DocumentSnapshot userSnapshot = await FirebaseFirestore.instance
+          .collection('users')  // Replace with your users collection name
+          .doc(recipientUid)
+          .get();
+
+      if (userSnapshot.exists) {
+        return userSnapshot['email'];  // Return the recipient's email
+      } else {
+        print('Recipient user document not found.');
+        return null;
+      }
+    } catch (e) {
+      print('Error fetching recipient email: $e');
+      return null;  // Return null if there was an error
+    }
+  }
+
 
   void _showErrorDialog(String message) {
     DialogInfo(
@@ -60,7 +104,7 @@ class _TransferMoneyPageState extends State<TransferMoneyPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: ColorPalette.accentWhite, // Make sure ColorPalette is defined
+      backgroundColor: ColorPalette.accentWhite,
       body: Form(
         key: _formKey,
         child: Container(
@@ -74,10 +118,10 @@ class _TransferMoneyPageState extends State<TransferMoneyPage> {
                 alignment: Alignment.center,
                 children: [
                   Positioned(
-                    left: 0, // Adjust the position of the back arrow if needed
+                    left: 0,
                     child: ArrowBack(
                       onTap: () {
-                        changePage(index: 3, context: context); // Make sure changePage is defined
+                        changePage(index: 3, context: context);
                       },
                     ),
                   ),
@@ -177,14 +221,14 @@ class _TransferMoneyPageState extends State<TransferMoneyPage> {
               ),
               const SizedBox(height: 20),
               ElevatedButton(
-                  onPressed: _transferMoney,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: ColorPalette.primary,
-                    padding: const EdgeInsets.symmetric(vertical: 18),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8.0),
-                    ),
+                onPressed: _transferMoney,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: ColorPalette.primary,
+                  padding: const EdgeInsets.symmetric(vertical: 18),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8.0),
                   ),
+                ),
                 child: const Text(
                   "Confirm",
                   style: TextStyle(
@@ -201,19 +245,60 @@ class _TransferMoneyPageState extends State<TransferMoneyPage> {
       ),
     );
   }
+
   void _transferMoney() async {
     if (!_formKey.currentState!.validate()) return;
 
     FocusScope.of(context).unfocus();
     String accountToSend = accountNumber.text.trim();
     String amountToSend = amountController.text.trim();
-    bool accountExists = await checkIfAccountExists(accountToSend);
+    String notes = notesController.text.trim();
 
-    if (!accountExists) {
+    // Fetch account details to get the UID
+    Map<String, dynamic>? accountDetails = await fetchAccountDetails(accountToSend);
+    if (accountDetails == null) {
       _showErrorDialog("The account number does not exist.");
       return;
     }
-    User? user = FirebaseAuth.instance.currentUser;
-    print("Proceeding with transfer to account: $accountToSend");
+
+    // Assuming 'uid' is available in the accountDetails
+    String recipientUid = accountDetails['uid'] ?? ''; // Get the UID from account details
+    if (recipientUid.isEmpty) {
+      _showErrorDialog("Recipient UID not found.");
+      return;
+    }
+
+    // Optionally, fetch recipient UID from the linked accounts (if needed)
+    String? linkedAccountUid = await fetchRecipientUid(recipientUid);
+    if (linkedAccountUid == null) {
+      _showErrorDialog("The recipient's linked account does not exist.");
+      return;
+    }
+
+    String accountName = accountDetails['accountName'] ?? '';
+    String? userEmail = await fetchRecipientEmail(recipientUid);
+
+    print('Account Number: $accountToSend');
+    print('Amount: $amountToSend');
+    print('Notes: $notes');
+    print('Account Name: $accountName');
+    print('User Email: ${userEmail ?? 'example@example.com'}');
+    print('Recipient UID: $linkedAccountUid');
+
+    // Navigate to the Transfer Confirmation page
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => TransferConfirmation(
+          accountNumber: accountToSend,
+          amount: amountToSend,
+          notes: notes,
+          accountName: accountName,
+          sendReceiptTo: userEmail ?? 'example@example.com',
+          recipientUid: linkedAccountUid,
+        ),
+      ),
+    );
   }
-}
+  }
+
