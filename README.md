@@ -1,6 +1,6 @@
 # kahel
 
-A new Flutter project.
+our application for ITE 351 New Ventures subject.
 
 ## Getting Started
 
