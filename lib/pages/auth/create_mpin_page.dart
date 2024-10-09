@@ -58,7 +58,7 @@ class _CreateMPINPageState extends State<CreateMPINPage> {
                   color: const Color(0xffE8E8E8),
                 ),
                 textStyle: const TextStyle(
-                  fontFamily: 'Montserrat',
+                  fontFamily: 'Poppins',
                   fontSize: 26,
                   fontWeight: FontWeight.w700,
                   color: ColorPalette.accentBlack,
@@ -73,7 +73,7 @@ class _CreateMPINPageState extends State<CreateMPINPage> {
                   border: Border.all(color: ColorPalette.primary, width: 2),
                 ),
                 textStyle: const TextStyle(
-                  fontFamily: 'Montserrat',
+                  fontFamily: 'Poppins',
                   fontSize: 26,
                   fontWeight: FontWeight.w700,
                   color: ColorPalette.accentBlack,

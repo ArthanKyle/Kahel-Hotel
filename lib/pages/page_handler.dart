@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:kahel/constants/colors.dart';
+import 'package:kahel/pages/crypto/pawkoin_converter.dart';
 import 'package:kahel/pages/financials/top_up_page.dart';
 import 'package:kahel/pages/financials/transfer_money.dart';
 import 'package:kahel/pages/profile_page.dart';
@@ -50,6 +51,7 @@ class _PageHandlerState extends State<PageHandler> {
       const TopUpPage(),
       const ViewAllTransactions(),
       const TransferMoneyPage(),
+      const PawkoinConverter(),
     ];
 
     int pageIndex = Provider.of<PageIndexProvider>(context).pageIndex;
@@ -147,7 +149,9 @@ class _PageHandlerState extends State<PageHandler> {
       width: 70,
       child: FittedBox(
         child: FloatingActionButton(
-          onPressed: () {},
+          onPressed: () {
+            changePage(index: 12, context: context);
+          },
           backgroundColor: ColorPalette.primary,
           child: Image.asset(
             "assets/images/icons/paws.png",

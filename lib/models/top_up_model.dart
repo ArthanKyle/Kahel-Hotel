@@ -14,6 +14,7 @@ class TopUpModel {
   String selectedBank;
 
 
+
   TopUpModel({
     required this.linkedAccountId,
     required this.moneyToSend,

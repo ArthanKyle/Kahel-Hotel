@@ -6,6 +6,12 @@ String maskAccountNumber(String accountNumber) {
   }
   return '******* ${accountNumber.substring(accountNumber.length - 3)}';
 }
+String maskPhoneNumber (String phoneNumber){
+  if (phoneNumber.length <= 3){
+    return phoneNumber;
+  }
+  return '******* ${phoneNumber.substring(phoneNumber.length - 3)}';
+}
 
 class PaymentCard extends StatelessWidget {
   final String name;

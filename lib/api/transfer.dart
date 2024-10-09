@@ -9,6 +9,7 @@ import '../widgets/landing/cards/payment_card.dart';
 
 Future<TransactionModel> transferMoney({
   required TransferMoneyModel transferData,
+  required String userUid,
 }) async {
   FirebaseFirestore db = FirebaseFirestore.instance;
 
@@ -35,6 +36,7 @@ Future<TransactionModel> transferMoney({
 
     // Use the data from linkedAccountDoc directly
     String recipientUid = linkedAccountDoc['uid']; // Get the UID from the linked_accounts document
+    String selectedBank = linkedAccountDoc['bank'];
 
     // Fetch recipient information using the recipientUid from 'users' collection
     DocumentSnapshot recipientSnapshot = await db.collection('users').doc(recipientUid).get();
@@ -77,26 +79,28 @@ Future<TransactionModel> transferMoney({
       transactionId: transactionId,
       uid: transferData.senderUid,
       createdAt: formattedDate,
-      amount: amountToSend.toString(), // Use amountToSend as a string
+      amount: amountToSend.toString(),
       amountType: "decrease",
       type: "Transfer",
       recipient: "Transfer Money",
       note: transferData.note ?? "",
-      desc: "Money transfer to ${recipient.name}",
+      desc: "You've successfully transferred money. ",
       transactionFee: transactionFee.toString(),
       time: formattedTime,
       senderLeftHeadText: "From",
-      senderLeftSubText: "Linked Bank Account",
-      senderRightHeadText: "Transfer",
-      senderRightSubText: maskAccountNumber(transferData.linkedBankId),
+      senderLeftSubText: "Balance",
+      senderRightHeadText: sender.name,
+      senderRightSubText: maskPhoneNumber(sender.phoneNumber),
       recipientLeftHeadText: "To",
-      recipientLeftSubText: recipient.name,
-      recipientRightHeadText: "Received",
-      recipientRightSubText: "Successfully",
+      recipientLeftSubText: selectedBank,
+      recipientRightHeadText: recipient.name,
+      recipientRightSubText: maskAccountNumber(transferData.linkedBankId),
       pointsEarned: transferData.pointsEarned,
     );
 
     // Save the transaction
+    await updateTransactionDate(userData: sender, uid: userUid);
+    await updateTransactionCount(userData: sender, uid: userUid);
     await apiSetTransactions(transaction: transaction);
 
     return transaction;

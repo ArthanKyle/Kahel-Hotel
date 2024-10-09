@@ -82,7 +82,7 @@ class _EnterMPINPageState extends State<EnterMPINPage> {
                   color: ColorPalette.bgColor,
                 ),
                 textStyle: const TextStyle(
-                  fontFamily: 'Montserrat',
+                  fontFamily: 'Poppins',
                   fontSize: 26,
                   fontWeight: FontWeight.w700,
                   color: ColorPalette.accentBlack,
@@ -97,7 +97,7 @@ class _EnterMPINPageState extends State<EnterMPINPage> {
                   border: Border.all(color: ColorPalette.primary, width: 2),
                 ),
                 textStyle: const TextStyle(
-                  fontFamily: 'Montserrat',
+                  fontFamily: 'Poppins',
                   fontSize: 26,
                   fontWeight: FontWeight.w700,
                   color: ColorPalette.accentBlack,
@@ -141,7 +141,7 @@ class _EnterMPINPageState extends State<EnterMPINPage> {
                 child: const Text(
                   "forgot MPIN?",
                   style: TextStyle(
-                    fontFamily: 'Montserrat',
+                    fontFamily: 'Poppins',
                     fontSize: 12,
                     fontWeight: FontWeight.w700,
                     color: ColorPalette.primary,

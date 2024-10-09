@@ -34,6 +34,7 @@ class TransferConfirmation extends StatefulWidget {
 
 class _TransferConfirmationState extends State<TransferConfirmation> {
   final _formKey = GlobalKey<FormState>();
+  String selectedBank = "";
 
   Future<String?> fetchRecipientUid(String uid) async {
     try {
@@ -260,17 +261,18 @@ class _TransferConfirmationState extends State<TransferConfirmation> {
                     TransferMoneyModel transferData = TransferMoneyModel(
                       senderUid: user.uid,
                       userUid: user.uid,
-                      recipientUid: recipientUid,  // Use the already available recipientUid
-                      linkedBankId: widget.accountNumber, // Assuming linkedBankId uses the account number
+                      recipientUid: recipientUid,
+                      linkedBankId: widget.accountNumber,
                       amountToSend: amountToSend,
                       pointsEarned: pointsEarned,
                       transactionFee: transactionFee,
                       totalExpenses: totalExpenses,
                       note: notes,
+                      selectedBank: selectedBank,
                     );
 
                     // Process the transfer
-                    TransactionModel transaction = await transferMoney(transferData: transferData);
+                    TransactionModel transaction = await transferMoney(transferData: transferData, userUid: user.uid);
 
                     Navigator.pop(context); // Close loading dialog
 

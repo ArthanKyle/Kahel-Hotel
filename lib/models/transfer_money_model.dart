@@ -17,6 +17,7 @@ class TransferMoneyModel {
   String totalExpenses;
   double pointsEarned;
   String? note;
+  String selectedBank;
 
   TransferMoneyModel({
     required this.senderUid,
@@ -27,6 +28,7 @@ class TransferMoneyModel {
     required this.transactionFee,
     required this.totalExpenses,
     required this.pointsEarned,
+    required this.selectedBank,
     this.note,
   });
 
@@ -42,6 +44,7 @@ class TransferMoneyModel {
         totalExpenses: json["totalExpenses"],
         pointsEarned: json["pointsEarned"].toDouble(),
         note: json["note"] ?? "",
+        selectedBank: json["selectedBank"],
       );
   // Add this method to create an instance from Firestore snapshot
   factory TransferMoneyModel.fromSnapshot(DocumentSnapshot snapshot) {
@@ -56,10 +59,11 @@ class TransferMoneyModel {
       transactionFee: data['transactionFee'],
       totalExpenses: data['totalExpenses'],
       note: data['note'],
+      selectedBank: data['selectedBank'],
+
     );
   }
 
-  // Method to convert an instance of TransferMoneyModel to JSON
   Map<String, dynamic> toJson() => {
     "senderUid": senderUid,
     "userUid": userUid,
@@ -70,5 +74,6 @@ class TransferMoneyModel {
     "totalExpenses": totalExpenses,
     "pointsEarned": pointsEarned,
     "note": note,
+    "selectedBank": selectedBank,
   };
 }
