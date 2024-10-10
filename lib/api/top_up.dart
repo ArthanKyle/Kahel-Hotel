@@ -55,7 +55,7 @@ Future<TransactionModel> topUp({
     TransactionModel transaction = TransactionModel(
       transactionId: transactionId,
       uid: userUid,
-      createdAt: formattedDate,
+      createdAt: formattedDate + ' ' + formattedTime,
       amount: data.moneyToSend,
       amountType: "increase",
       type: "Top Up",

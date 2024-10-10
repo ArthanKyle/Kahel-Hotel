@@ -78,7 +78,7 @@ Future<TransactionModel> transferMoney({
     TransactionModel transaction = TransactionModel(
       transactionId: transactionId,
       uid: transferData.senderUid,
-      createdAt: formattedDate,
+      createdAt: formattedDate + ' ' + formattedTime,
       amount: amountToSend.toString(),
       amountType: "decrease",
       type: "Transfer",

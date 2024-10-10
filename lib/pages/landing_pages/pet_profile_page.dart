@@ -6,12 +6,14 @@ import 'package:kahel/widgets/landing/cards/vaccination_card.dart';
 import 'package:kahel/widgets/universal/dialog_info.dart';
 import 'package:kahel/widgets/universal/dialog_loading.dart';
 import 'package:kahel/widgets/universal/dialog_vaccine.dart';
+import '../../api/auth.dart';
 import '../../api/pet.dart';
 import '../../constants/colors.dart';
 import '../../models/pet.dart';
 import '../../utils/index_provider.dart';
 import '../../widgets/landing/cards/info_card.dart';
 import '../../widgets/landing/cards/pet_details.dart';
+import '../../widgets/notifications/notificaton_modal.dart';
 import '../../widgets/universal/auth/add.dart';
 import '../../widgets/universal/auth/arrow_back.dart';
 import '../auth/registration_pet_page.dart';
@@ -27,9 +29,11 @@ class _PetProfilePageState extends State<PetProfilePage> {
   String? petName;
   String? petId; // Added petId
   String petProfilePictureUrl = "";
+  User? user;
 
   @override
   void initState() {
+    user = getUser();
     super.initState();
     _loadPetData(); // Loading the pet data
   }
@@ -111,11 +115,25 @@ class _PetProfilePageState extends State<PetProfilePage> {
                 ),
                 Positioned(
                   right: 0,
-                  child: Add(
-                    onTap: () {
-                      // Now using named parameters for the changePage function
-                      changePage(index: 7, context: context);
-                    },
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min, // Ensures the icons don't take up unnecessary space
+                    children: [
+                      Add(
+                        onTap: () {
+                          // Navigate to add page
+                          changePage(index: 7, context: context);
+                        },
+                      ),
+                      const SizedBox(width: 5), // Space between bell and add button
+                      GestureDetector(
+                        onTap: () => NotifModal(uid: user!.uid).build(context),
+                        child: Image.asset(
+                          'assets/images/icons/bell.png',
+                          height: 28,
+                          width: 28,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ],
@@ -253,7 +271,11 @@ class _PetProfilePageState extends State<PetProfilePage> {
             },
           ),
             const SizedBox(height: 20),
-            const MedicalCard(title: 'Medical History'),
+            MedicalCard(title: 'View Activity',
+              onTap: () {
+                changePage(index: 5, context: context);
+              },
+            ),
           ],
         ),
       ),

@@ -6,7 +6,6 @@ class BookingModel {
   String petName;
   DateTime fromDate;
   DateTime toDate;
-  String notes;
   String package;
   String price;
   String transactionId;
@@ -18,7 +17,6 @@ class BookingModel {
     required this.petName,
     required this.fromDate,
     required this.toDate,
-    required this.notes,
     required this.package,
     required this.price,
     required this.transactionId,
@@ -31,7 +29,7 @@ class BookingModel {
     'petName': petName,
     'fromDate': fromDate.toIso8601String(),
     'toDate': toDate.toIso8601String(),
-    'notes': notes,
+
     'package': package,
     'price': price,
     'transactionId': transactionId,
@@ -46,7 +44,6 @@ class BookingModel {
       petName: data['petName'] ?? '',
       fromDate: data['fromDate'] != null ? DateTime.parse(data['fromDate']) : DateTime.now(),
       toDate: data['toDate'] != null ? DateTime.parse(data['toDate']) : DateTime.now(),
-      notes: data['notes'] ?? '',
       package: data['package'] ?? '',
       price: data['price']?.toString() ?? '0',
       transactionId: data['transactionId'] ?? '',
@@ -60,7 +57,6 @@ class BookingModel {
     petName: json["petName"] ?? '',
     fromDate: json["fromDate"] != null ? DateTime.parse(json["fromDate"]) : DateTime.now(),
     toDate: json["toDate"] != null ? DateTime.parse(json["toDate"]) : DateTime.now(),
-    notes: json["notes"] ?? '',
     package: json["package"] ?? '',
     price: json["price"]?.toString() ?? '0',
     transactionId: json["transactionId"] ?? '',

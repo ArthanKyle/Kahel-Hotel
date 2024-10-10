@@ -52,7 +52,10 @@ class _ActivityTrackerState extends State<ActivityTracker> {
               alignment: Alignment.center,
               children: [
                 Positioned(
-                  child: ArrowBack(onTap: () => Navigator.of(context).pop()),
+                  child: ArrowBack(onTap: () {
+                    changePage(index: 0, context: context);
+                  }
+                  ),
                 ),
               ],
             ),

@@ -31,7 +31,7 @@ class _BookServiceState extends State<BookService> {
   List<String> userPets = [];
   bool isLoading = true;
   String? uid;
-  final List<String> packages = ['Half-Day Package', 'Silver Package', 'Gold Package'];
+  final List<String> packages = ['Classic Pod', 'Deluxe Pod'];
   bool isHalfDaySelected = false;
   String? selectedTime;
 
@@ -76,7 +76,6 @@ class _BookServiceState extends State<BookService> {
     setState(() {
       selectedPackage = packageName;
       selectedPrice = price;
-      isHalfDaySelected = packageName == 'Half-Day Package';
     });
   }
 
@@ -91,9 +90,28 @@ class _BookServiceState extends State<BookService> {
           child: ListView(
             physics: const BouncingScrollPhysics(),
             children: [
-              const SizedBox(height: 10),
-              ArrowBack(onTap: () => changePage(index: 0, context: context)),
-              const AuthInfo(headText: "Booking Details", subText: ""),
+              const SizedBox(height: 20),
+              Stack(
+                alignment: Alignment.center,
+                children: [
+                  Positioned(
+                      child: ArrowBack(
+                          onTap: () {
+                            changePage(index: 3, context: context);
+                          }
+                      )
+                  ),
+                  const Text(
+                    "Booking Details",
+                    style: TextStyle(
+                      fontFamily: 'Poppins',
+                      fontSize: 24,
+                      fontWeight: FontWeight.w800,
+                      color: ColorPalette.accentBlack,
+                    ),
+                  ),
+                ],
+              ),
               const SizedBox(height: 10),
               PetNameDropdown(
                 labelText: 'Pet Name',
@@ -110,25 +128,18 @@ class _BookServiceState extends State<BookService> {
               ),
               const SizedBox(height: 12),
               _buildPackageOption(
-                'Half-Day Package',
-                400.00,
-                selectedPackage == 'Half-Day Package',
-                showDetails: selectedPackage == 'Half-Day Package',
+                'Classic Pod',
+                900.00,
+                selectedPackage == 'Classic Pod',
+                showDetails: selectedPackage == 'Classic Pod',
                 showHalfDayInclusions: true,
               ),
               const SizedBox(height: 8),
               _buildPackageOption(
-                'Silver Package',
+                'Deluxe Pod',
                 1000.00,
-                selectedPackage == 'Silver Package',
-                showDetails: selectedPackage == 'Silver Package',
-              ),
-              const SizedBox(height: 8),
-              _buildPackageOption(
-                'Gold Package',
-                1000.00,
-                selectedPackage == 'Gold Package',
-                showDetails: selectedPackage == 'Gold Package',
+                selectedPackage == 'Deluxe Pod',
+                showDetails: selectedPackage == 'Deluxe Pod',
               ),
               const SizedBox(height: 16),
               ElevatedButton(
@@ -141,18 +152,8 @@ class _BookServiceState extends State<BookService> {
                 ),
                 onPressed: () {
                   if (_formKey.currentState!.validate()) {
-                    String fromDate;
-                    String toDate;
-
-                    if (isHalfDaySelected) {
-                      fromDate = halfDayfromDateController.text;
-                      toDate = halfDaytoDateController.text;
-                    } else {
-                      fromDate = fromDateController.text;
-                      toDate = toDateController.text;
-                    }
-
-                    String notes = notesController.text;
+                    String  fromDate = fromDateController.text;
+                    String  toDate = toDateController.text;
                     String petName = petNameController.text;
                     String packageToPass = selectedPackage ?? '';
                     double selectedPrice = this.selectedPrice;
@@ -164,7 +165,6 @@ class _BookServiceState extends State<BookService> {
                           builder: (context) => PaymentPage(
                             fromDate: fromDate,
                             toDate: toDate,
-                            notes: notes,
                             petName: petName,
                             selectedPackage: packageToPass,
                             selectedPrice: selectedPrice,
@@ -208,7 +208,7 @@ class _BookServiceState extends State<BookService> {
         bool showDetails = false,
         bool showHalfDayInclusions = false,
       }) {
-    bool isHalfDayPackageSelected = packageName == 'Half-Day Package';
+    bool isHalfDayPackageSelected = packageName == 'Classic Pod';
 
     return GestureDetector(
       onTap: () {
@@ -247,15 +247,6 @@ class _BookServiceState extends State<BookService> {
                   ),
                 ),
                 const Spacer(),
-                Text(
-                  '${price.toStringAsFixed(2)} PHP',
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black,
-                  ),
-                ),
-                const SizedBox(width: 8),
                 const Icon(
                   Icons.add,
                   color: Colors.black,
@@ -264,42 +255,35 @@ class _BookServiceState extends State<BookService> {
             ),
             if (showDetails) ...[
               const SizedBox(height: 12),
-              if (isHalfDayPackageSelected) ...[
-                Text(
-                  'Schedule: 8am - 2pm & 2pm - 8pm',
-                  style: const TextStyle(color: Colors.black),
+              const Text(
+                'Inclusions:',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black,
                 ),
-                const SizedBox(height: 8),
-                const Text(
-                  'Inclusions:',
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                const Text(
-                  '• Sitting for half a day (6 hrs)\n• 2 meals + Treats\n• Kennel Rent\n• Service Fee',
-                  style: TextStyle(color: Colors.black),
-                ),
-                const SizedBox(height: 12),
-                _buildHalfDayDateTimeField('From Date', halfDayfromDateController, halfDaytoDateController),
-                const SizedBox(height: 12),
-                _buildHalfDayDateTimeField('To Date', halfDaytoDateController, halfDayfromDateController),
-                const SizedBox(height: 12),
-              ] else ...[
-                _buildDateTimeField('From Date', fromDateController),
-                const SizedBox(height: 8),
-                _buildDateTimeField('To Date', toDateController),
-                const SizedBox(height: 8),
-                _buildNotesField(),
-              ],
+              ),
+              const SizedBox(height: 4),
+              const Text(
+                '• Supervision of Staff.'
+                    '\n• Pet Boarding with a climate-controlled environment.'
+                    '\n• Meals and unlimited filtered water supply'
+                    '\n• Morning & Evening play time/walk (for boarding pets)'
+                    '\n• Room Services (cleaning and disinfecting per room)'
+                    '\n• Free bath and blow dry (for boarding at least 3 days)',
+                style: TextStyle(color: Colors.black, fontFamily: 'Poppins'),
+              ),
+              const SizedBox(height: 12),
+              _buildDateTimeField('From Date', fromDateController),
+              const SizedBox(height: 12),
+              _buildDateTimeField('To Date', toDateController),
+              const SizedBox(height: 12),
             ],
           ],
         ),
       ),
     );
   }
+
 
   Widget _buildDateTimeField(String label, TextEditingController controller) {
     return TextField(
@@ -336,7 +320,7 @@ class _BookServiceState extends State<BookService> {
                   pickedTime.hour,
                   pickedTime.minute,
                 );
-                controller.text = DateFormat('yyyy-MM-dd hh:mm a').format(finalDateTime);
+                controller.text = DateFormat('yyyy-MM-dd').format(finalDateTime);
               }
             }
           },
@@ -359,133 +343,6 @@ class _BookServiceState extends State<BookService> {
           borderRadius: BorderRadius.circular(8),
           borderSide: const BorderSide(
             color: ColorPalette.accentWhite,
-            width: 2.0,
-          ),
-        ),
-        labelStyle: const TextStyle(
-          color: ColorPalette.accentBlack,
-        ),
-      ),
-    );
-  }
-
-  Widget _buildHalfDayDateTimeField(String label, TextEditingController controller, TextEditingController toController) {
-    return TextField(
-      controller: controller,
-      readOnly: true,
-      style: const TextStyle(
-        color: ColorPalette.accentBlack,
-      ),
-      decoration: InputDecoration(
-        labelText: label,
-        filled: true,
-        fillColor: ColorPalette.bgColor,
-        suffixIcon: IconButton(
-          icon: const Icon(Icons.calendar_today),
-          onPressed: () async {
-            DateTime? pickedDate = await showDatePicker(
-              context: context,
-              initialDate: DateTime.now(),
-              firstDate: DateTime(2000),
-              lastDate: DateTime(2101),
-            );
-
-            if (pickedDate != null) {
-              TimeOfDay? pickedTime = await showTimePicker(
-                context: context,
-                initialTime: TimeOfDay.now(),
-              );
-
-              if (pickedTime != null) {
-                DateTime finalDateTime = DateTime(
-                  pickedDate.year,
-                  pickedDate.month,
-                  pickedDate.day,
-                  pickedTime.hour,
-                  pickedTime.minute,
-                );
-
-                // Set the 'From Date' in the controller
-                controller.text = DateFormat('yyyy-MM-dd hh:mm a').format(finalDateTime);
-
-                // Automatically set the 'To Date' based on the selected 'From Date'
-                if (pickedTime.hour == 2) {
-                  // If the user selects 2 AM, set 'To Date' to 8 PM of the same day
-                  toController.text = DateFormat('yyyy-MM-dd hh:mm a').format(finalDateTime.add(Duration(hours: 18)));
-                } else if (pickedTime.hour == 8) {
-                  // If the user selects 8 AM, set 'To Date' to 2 PM of the same day
-                  toController.text = DateFormat('yyyy-MM-dd hh:mm a').format(finalDateTime.add(Duration(hours: 6)));
-                } else if (pickedTime.hour == 14) {
-                  // If the user selects 2 PM, set 'To Date' to 8 PM of the same day
-                  toController.text = DateFormat('yyyy-MM-dd hh:mm a').format(finalDateTime.add(Duration(hours: 6)));
-                } else {
-                  // Optional: Clear 'To Date' if the time does not match any range
-                  toController.text = ''; // Clear 'To Date' or set a default value as needed
-                }
-              }
-            }
-          },
-        ),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
-          borderSide: const BorderSide(
-            color: ColorPalette.accentWhite,
-            width: 2.0,
-          ),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
-          borderSide: const BorderSide(
-            color: ColorPalette.accentWhite,
-            width: 2.0,
-          ),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
-          borderSide: const BorderSide(
-            color: ColorPalette.accentWhite,
-            width: 2.0,
-          ),
-        ),
-        labelStyle: const TextStyle(
-          color: ColorPalette.accentBlack,
-        ),
-      ),
-    );
-  }
-
-
-
-
-  Widget _buildNotesField() {
-    return TextField(
-      controller: notesController,
-      maxLines: 3,
-      style: const TextStyle(
-        color: ColorPalette.accentBlack,
-      ),
-      decoration: InputDecoration(
-        labelText: 'Notes',
-        filled: true,
-        fillColor: ColorPalette.bgColor,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
-          borderSide: const BorderSide(
-            color: ColorPalette.accentWhite, // Change border color to white
-            width: 2.0, // Adjust the width as necessary
-          ),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
-          borderSide: const BorderSide(
-            color: ColorPalette.accentWhite, // Change border color to white
-            width: 2.0,
-          ),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
-          borderSide: const BorderSide(
-            color: ColorPalette.accentWhite, // Change border color to white
             width: 2.0,
           ),
         ),

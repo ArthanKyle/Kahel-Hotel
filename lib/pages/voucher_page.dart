@@ -5,6 +5,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../constants/colors.dart';
 import '../utils/index_provider.dart';
 import '../widgets/pawkoin/pawkoin.dart';
+import '../widgets/universal/auth/arrow_back.dart';
 import '../widgets/universal/dialog_info.dart';
 import '../widgets/universal/dialog_unsuccessful.dart';
 import '../widgets/universal/user_status_bar.dart';
@@ -191,15 +192,31 @@ class _VoucherPageState extends State<VoucherPage> {
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: ListView(
         physics: const BouncingScrollPhysics(),
+        shrinkWrap: true,
         children: [
           const SizedBox(height: 40),
-          HeaderBar(
-            subText: "spend wise and use",
-            headText: "Your Vouchers",
-            onPressProfile: () => changePage(index: 3, context: context),
-            onPressNotif: () {},
+          Stack(
+            alignment: Alignment.center,
+            children: [
+              Positioned(
+                  child: ArrowBack(
+                      onTap: () {
+                        changePage(index: 0, context: context);
+                      }
+                  )
+              ),
+              const Text(
+                "Your Vouchers",
+                style: TextStyle(
+                  fontFamily: 'Poppins',
+                  fontSize: 24,
+                  fontWeight: FontWeight.w800,
+                  color: ColorPalette.accentBlack,
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 30),
           const PawKoin(),
           const SizedBox(height: 20),
           _buildDailyRewardsSection(),

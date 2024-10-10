@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_typeahead/flutter_typeahead.dart';  // Import flutter_typeahead
 
 import '../../../constants/borders.dart';
 import '../../../constants/colors.dart';
 import '../../../constants/strings.dart';
-
 
 class PetBreedDropdown extends StatefulWidget {
   final String labelText;
@@ -25,7 +25,7 @@ class _PetBreedDropdownState extends State<PetBreedDropdown> {
   @override
   void initState() {
     super.initState();
-    selectedBreed = widget.controller.text; // Initialize selectedBreed with the controller's text
+    selectedBreed = widget.controller.text;
   }
 
   @override
@@ -43,39 +43,36 @@ class _PetBreedDropdownState extends State<PetBreedDropdown> {
           ),
         ),
         const SizedBox(height: 8),
-        DropdownButtonFormField<String>(
-          value: selectedBreed!.isNotEmpty ? selectedBreed : null, // Handle null values
-          onChanged: (value) {
-            if (value == null) return;
-            setState(() {
-              selectedBreed = value;
-              widget.controller.text = value; // Update the controller's text
-            });
-          },
-          validator: (value) {
-            if (value == null || value.isEmpty) return "Please select a pet breed.";
-            return null;
-          },
-          decoration: InputDecoration(
-            contentPadding: const EdgeInsets.symmetric(horizontal: 15, vertical: 18.5),
-            enabledBorder: Inputs.enabledBorder,
-            focusedBorder: Inputs.focusedBorder,
-            errorBorder: Inputs.errorBorder,
-            focusedErrorBorder: Inputs.errorBorder,
-            filled: true,
-            fillColor: ColorPalette.bgColor,
-            errorStyle: const TextStyle(
-              fontFamily: "Poppins",
-              fontWeight: FontWeight.normal,
-              color: ColorPalette.errorColor,
-              fontSize: 12,
+
+        // Replace DropdownButtonFormField with TypeAheadFormField
+        TypeAheadFormField<String>(
+          textFieldConfiguration: TextFieldConfiguration(
+            controller: widget.controller,
+            decoration: InputDecoration(
+              contentPadding: const EdgeInsets.symmetric(horizontal: 15, vertical: 18.5),
+              enabledBorder: Inputs.enabledBorder,
+              focusedBorder: Inputs.focusedBorder,
+              errorBorder: Inputs.errorBorder,
+              focusedErrorBorder: Inputs.errorBorder,
+              filled: true,
+              fillColor: ColorPalette.bgColor,
+              errorStyle: const TextStyle(
+                fontFamily: "Poppins",
+                fontWeight: FontWeight.normal,
+                color: ColorPalette.errorColor,
+                fontSize: 12,
+              ),
             ),
           ),
-          items: KahelStrings.breed.map<DropdownMenuItem<String>>((String value) {
-            return DropdownMenuItem<String>(
-              value: value,
-              child: Text(
-                value,
+          suggestionsCallback: (pattern) {
+            // Filter breeds that contain the input text (case insensitive)
+            return KahelStrings.breed.where((breed) =>
+                breed.toLowerCase().contains(pattern.toLowerCase()));
+          },
+          itemBuilder: (context, String suggestion) {
+            return ListTile(
+              title: Text(
+                suggestion,
                 style: const TextStyle(
                   color: ColorPalette.accentBlack,
                   fontFamily: "Poppins",
@@ -84,7 +81,28 @@ class _PetBreedDropdownState extends State<PetBreedDropdown> {
                 ),
               ),
             );
-          }).toList(),
+          },
+          onSuggestionSelected: (String suggestion) {
+            // Update the selected breed and controller when a suggestion is selected
+            setState(() {
+              selectedBreed = suggestion;
+              widget.controller.text = suggestion;
+            });
+          },
+          noItemsFoundBuilder: (context) => Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Text(
+              'No pet breeds found',
+              style: const TextStyle(
+                color: ColorPalette.errorColor,
+                fontFamily: "Poppins",
+              ),
+            ),
+          ),
+          validator: (value) {
+            if (value == null || value.isEmpty) return "Please select or type a pet breed.";
+            return null;
+          },
         ),
         const SizedBox(height: 20),
       ],

@@ -67,21 +67,6 @@ class CustomCard extends StatelessWidget {
                   ),
                 ),
               ),
-              Align(
-                alignment: Alignment.bottomRight,
-                child: Container(
-                  margin: const EdgeInsets.only(bottom: 20), // Add top margin here
-                  child: Text(
-                    'view here',
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontFamily: 'Poppins',
-                      color: ColorPalette.primary,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ),
-              ),
               const SizedBox(width: 20),
             ],
           ),

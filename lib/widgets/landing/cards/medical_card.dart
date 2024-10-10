@@ -6,23 +6,27 @@ import '../../../../constants/colors.dart';
 class MedicalCard extends StatelessWidget {
   final String title; // Title of the medical card
   final String details; // Additional details or description
+  final VoidCallback onTap;
 
   const MedicalCard({
     Key? key,
     required this.title,
     this.details = '', // Default empty details
+    required this.onTap,
   }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      constraints: const BoxConstraints(
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        constraints: const BoxConstraints(
         minHeight: 120,
         maxHeight: 120,
       ),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        color: Colors.grey.shade300, // Set the card color
+        color: ColorPalette.primary,
         borderRadius: BorderRadius.circular(8),
       ),
       child: Row(
@@ -36,7 +40,7 @@ class MedicalCard extends StatelessWidget {
                 style: const TextStyle(
                   fontFamily: 'Poppins',
                   fontSize: 15,
-                  fontWeight: FontWeight.w400,
+                  fontWeight: FontWeight.w600,
                   color: ColorPalette.accentBlack,
                 ),
               ),
@@ -52,9 +56,10 @@ class MedicalCard extends StatelessWidget {
               ),
             ],
           ),
-          const Icon(Icons.add, size: 16), // Optional icon
+          const Icon(Icons.arrow_forward_ios_rounded, size: 20), // Optional icon
         ],
       ),
+    )
     );
   }
 }

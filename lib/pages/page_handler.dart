@@ -43,7 +43,6 @@ class _PageHandlerState extends State<PageHandler> {
       PaymentPage(
         fromDate: bookingDetails.fromDate,
         toDate: bookingDetails.toDate,
-        notes: bookingDetails.notes,
         petName: bookingDetails.petName,
         selectedPackage: bookingDetails.selectedPackage,
         selectedPrice: bookingDetails.selectedPrice,

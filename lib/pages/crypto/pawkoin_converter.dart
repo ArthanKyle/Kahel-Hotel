@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:kahel/constants/colors.dart';
-import 'package:pinput/pinput.dart';
-
+import 'package:cloud_firestore/cloud_firestore.dart'; // Import Firestore
+import 'package:firebase_auth/firebase_auth.dart'; // Import FirebaseAuth for user authentication
 import '../../widgets/mpin/mpin.dart';
 
 class PawkoinConverter extends StatefulWidget {
@@ -12,9 +11,30 @@ class PawkoinConverter extends StatefulWidget {
 }
 
 class _PawkoinConverterState extends State<PawkoinConverter> {
-  double balance = 69.69;
+  double pawKoins = 0.0;
   String conversionRate = "30.20"; // Placeholder conversion rate
   String enteredPawKoins = ""; // Start with an empty string
+
+  Future<void> fetchPawKoins() async {
+    try {
+      User? user = FirebaseAuth.instance.currentUser; // Get current user
+      if (user != null) {
+        // Fetch PawKoins from Firestore
+        DocumentSnapshot userDoc = await FirebaseFirestore.instance
+            .collection('users')
+            .doc(user.uid)
+            .get();
+
+        if (userDoc.exists) {
+          setState(() {
+            pawKoins = userDoc.get('pawKoins') ?? 0.0; // Get PawKoins from user doc
+          });
+        }
+      }
+    } catch (e) {
+      print('Error fetching PawKoins: $e');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -55,7 +75,7 @@ class _PawkoinConverterState extends State<PawkoinConverter> {
                     ],
                   ),
                   Text(
-                    "\$$balance",
+                    "$pawKoins",
                     style: const TextStyle(
                         fontSize: 18, fontWeight: FontWeight.bold),
                   ),

@@ -18,7 +18,7 @@ import '../receipts/receipt_page.dart';
 class PaymentPage extends StatefulWidget {
   final String fromDate;
   final String toDate;
-  final String notes;
+
   final String petName;
   final String selectedPackage;
   final double selectedPrice;
@@ -27,7 +27,7 @@ class PaymentPage extends StatefulWidget {
     super.key,
     required this.fromDate,
     required this.toDate,
-    required this.notes,
+
     required this.petName,
     required this.selectedPackage,
     required this.selectedPrice,
@@ -45,6 +45,10 @@ class _PaymentPageState extends State<PaymentPage> {
   String selectedAccountName = '';
   bool agreeToTerms = false;
   int selectedMethod = 0;
+  static const double classicPodWeekdayPrice = 900;
+  static const double classicPodWeekendPrice = 1000;
+  static const double deluxePodWeekdayPrice = 1000;
+  static const double deluxePodWeekendPrice = 1100;
 
   @override
   void initState() {
@@ -52,6 +56,29 @@ class _PaymentPageState extends State<PaymentPage> {
     _fetchUserData();
     _fetchLinkedAccounts();
   }
+
+  double calculateTotalPrice() {
+    DateTime fromParsed = DateFormat('yyyy-MM-dd').parseStrict(widget.fromDate);
+    DateTime toParsed = DateFormat('yyyy-MM-dd').parseStrict(widget.toDate);
+    Duration duration = toParsed.difference(fromParsed);
+
+    double pricePerHour = 0;
+
+    // Set the price based on the selected package
+    if (widget.selectedPackage == "Classic Pod") {
+      pricePerHour = (fromParsed.weekday == 6 || fromParsed.weekday == 7)
+          ? classicPodWeekendPrice
+          : classicPodWeekdayPrice;
+    } else if (widget.selectedPackage == "Deluxe Pod") {
+      pricePerHour = (fromParsed.weekday == 6 || fromParsed.weekday == 7)
+          ? deluxePodWeekendPrice
+          : deluxePodWeekdayPrice;
+    }
+
+    double totalPrice = pricePerHour + (duration.inHours > 0 ? duration.inHours : 1); // Ensure at least 1 hour
+    return totalPrice;
+  }
+
 
   Future<void> _fetchUserData() async {
     try {
@@ -146,6 +173,7 @@ class _PaymentPageState extends State<PaymentPage> {
   }
 
   Widget _buildPaymentForm(BuildContext context) {
+    double totalPrice = calculateTotalPrice(); // Calculate the total price here
     return SingleChildScrollView(
       physics: const BouncingScrollPhysics(),
       padding: const EdgeInsets.all(16.0),
@@ -163,11 +191,11 @@ class _PaymentPageState extends State<PaymentPage> {
                     methodTitle: linkedAccounts[index].bank,
                     methodImage: "assets/images/icons/${linkedAccounts[index].bank.toLowerCase()}.png",
                     cardNumber: "**** **** ${linkedAccounts[index].accountNumber.substring(linkedAccounts[index].accountNumber.length - 3)}",
-                    value: index, // Use the index as the value
+                    value: index,
                     onSelected: () {
                       setState(() {
-                        selectedAccountName = linkedAccounts[index].bank; // Update selected account name
-                        selectedMethod = index; // Update selectedMethod with the index
+                        selectedAccountName = linkedAccounts[index].bank;
+                        selectedMethod = index;
                       });
                     },
                   ),
@@ -184,10 +212,10 @@ class _PaymentPageState extends State<PaymentPage> {
           buildPaymentInfoTile("To Date", widget.toDate),
           buildPaymentInfoTile("Contact", userEmail),
           const SizedBox(height: 24),
-          buildPriceInfo("Sub Total", formatPrice(widget.selectedPrice)),
-          buildPriceInfo("Downpayment", formatPrice(widget.selectedPrice)),
+          buildPriceInfo("Sub Total", formatPrice(totalPrice)),
+          buildPriceInfo("Downpayment", formatPrice(totalPrice)),
           const Divider(thickness: 1.5, color: ColorPalette.gray),
-          buildPriceInfo("Total", formatPrice(widget.selectedPrice)),
+          buildPriceInfo("Total", formatPrice(totalPrice)),
           const SizedBox(height: 12),
           buildTermsAndConditions(),
           const SizedBox(height: 16),
@@ -323,7 +351,6 @@ class _PaymentPageState extends State<PaymentPage> {
             petName: widget.petName,
             fromDate: fromParsed,
             toDate: toParsed,
-            notes: widget.notes,
             package: widget.selectedPackage,
             price: parsedPrice.toString(),
             transactionId: transactionId,
@@ -374,8 +401,6 @@ class _PaymentPageState extends State<PaymentPage> {
               ),
             ),
           );
-
-
         } catch (e, stackTrace) {
           // Print the error and the stack trace to the console
           print('Error creating booking: $e');
@@ -399,7 +424,6 @@ class _PaymentPageState extends State<PaymentPage> {
       }
     }
   }
-
 
 
   Widget buildPriceInfo(String title, String value) {
@@ -437,7 +461,6 @@ class _PaymentPageState extends State<PaymentPage> {
             (match) => '${match.group(1)},'
     )}';
   }
-
 
   Widget buildPaymentInfoTile(String title, String value) {
     return Padding(
