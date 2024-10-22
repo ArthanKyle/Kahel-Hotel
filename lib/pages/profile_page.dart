@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+
 import '../constants/colors.dart';
 import '../utils/index_provider.dart';
 import '../widgets/landing/transactions/transaction_container.dart';
@@ -29,42 +30,6 @@ class _ProfilePageState extends State<ProfilePage> {
           const SizedBox(height: 40),
           const ProfileDetailsBox(),
           const SizedBox(height: 20),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              _buildTransactionButton(
-                Icons.account_balance_wallet,
-                "Top Up",
-                    () {
-                  changePage(index: 9, context: context);
-                  print("Top Up button tapped");
-                },
-              ),
-              _buildTransactionButton(
-                Icons.swap_horiz,
-                "Transfer",
-                    () {
-                  changePage(index: 11, context: context);
-                  print("Transfer button tapped");
-                },
-              ),
-              _buildTransactionButton(
-                Icons.cached,
-                "Convert",
-                    () {
-                  print("Convert button tapped");
-                },
-              ),
-              _buildTransactionButton(
-                Icons.payment,
-                "Payment",
-                    () {
-                  print("Payment button tapped");
-                },
-              ),
-            ],
-          ),
-          const SizedBox(height: 20),
           ClosableSubSectionInfo(
             icon: Icons.email_rounded,
             leftHeadText: "Your account is at risk",
@@ -80,7 +45,7 @@ class _ProfilePageState extends State<ProfilePage> {
             onClose: () {},
           ),
           const SizedBox(height: 10),
-          const Text("Recent Transaction",
+          const Text("Recent Booking",
             style: TextStyle(
               fontFamily: 'Poppins',
               fontWeight: FontWeight.w800,
@@ -123,20 +88,13 @@ class _ProfilePageState extends State<ProfilePage> {
               const SizedBox(height: 10),
               Column(
                 children: [
-                  ActivityBox(
-                    name: "Dashboard",
-                    filePath: "assets/images/icons/dashboard.png",
-                    onTap: () => changePage(context: context, index: 0),
-                    iconSizeHeight: 29,
-                    iconSizeWidth: 25,
-                  ),
                   const SizedBox(height: 15),
                   ActivityBox(
-                    name: "Analytics and Insights",
-                    filePath: "assets/images/icons/pie-chart.png",
-                    onTap: () => changePage(context: context, index: 5),
-                    iconSizeHeight: 25,
-                    iconSizeWidth: 25,
+                      name: "Top - Up",
+                      filePath: "assets/images/icons/wallet.png",
+                      onTap: () => changePage(context: context, index: 9),
+                      iconSizeWidth: 29,
+                      iconSizeHeight: 25,
                   ),
                   const SizedBox(height: 15),
                   ActivityBox(
@@ -199,25 +157,4 @@ class _ProfilePageState extends State<ProfilePage> {
       ),
     );
   }
-}
-
-Widget _buildTransactionButton(IconData icon, String label, VoidCallback onTap) {
-  return GestureDetector(
-    onTap: onTap, // Handle the tap event
-    child: Column(
-      children: [
-        Container(
-          width: 60, // Define square dimensions
-          height: 60, // Same value as width to make it square
-          decoration: BoxDecoration(
-            color: ColorPalette.primary,
-            borderRadius: BorderRadius.circular(10), // Slightly rounded corners
-          ),
-          child: Icon(icon, size: 30, color: ColorPalette.accentBlack),
-        ),
-        const SizedBox(height: 8),
-        Text(label, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-      ],
-    ),
-  );
 }

@@ -71,15 +71,17 @@ class _PetProfilePageState extends State<PetProfilePage> {
     });
   }
 
-  Stream<DocumentSnapshot> _getPetStream() {
-    if (petId == null) {
-      return Stream.empty(); // Return an empty stream if no petId
+  Stream<QuerySnapshot<Object?>> _getPetStream() {
+    User? user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      return Stream.empty(); // Return an empty stream if no user is logged in
     }
     return FirebaseFirestore.instance
         .collection('pets')
-        .doc(petId)
-        .snapshots(); // Listen to real-time updates
+        .where('uid', isEqualTo: user.uid)
+        .snapshots(); // Listen to real-time updates for all pets of the user
   }
+
 
   @override
   Widget build(BuildContext context) {
@@ -139,137 +141,146 @@ class _PetProfilePageState extends State<PetProfilePage> {
               ],
             ),
             const SizedBox(height: 20),
-            StreamBuilder<DocumentSnapshot>(
+            StreamBuilder<QuerySnapshot<Object?>>(
               stream: _getPetStream(),
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
-                  // Display a placeholder while loading
                   return const Center(child: CircularProgressIndicator());
                 } else if (snapshot.hasError) {
                   return Center(child: Text('Error: ${snapshot.error}'));
-                } else if (!snapshot.hasData || !snapshot.data!.exists) {
+                } else if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
                   return const Center(child: Text('No pet data available'));
                 } else {
-                  // Extract pet data and display
-                  var petData = snapshot.data!.data() as Map<String, dynamic>;
-                  PetModel pet = PetModel.fromJson(petData);
-                  return PetDetailsCard(
-                    name: pet.petName,
-                    breed: pet.petBreed,
-                    gender: pet.gender,
-                    weight: pet.weight,
-                    birthday: pet.birthday,
-                    preferences: pet.preferences,
-                    allergies: pet.allergies,
-                    profilePicturePath: pet.profilePictureUrl,
+                  List<PetModel> pets = snapshot.data!.docs
+                      .map((doc) => PetModel.fromJson(doc.data() as Map<String, dynamic>))
+                      .toList();
+
+                  return SizedBox(
+                    height: 220, // Adjust height as needed
+                    child: PageView.builder(
+                      itemCount: pets.length,
+                      itemBuilder: (context, index) {
+                        PetModel pet = pets[index];
+                        return PetDetailsCard(
+                          name: pet.petName,
+                          breed: pet.petBreed,
+                          gender: pet.gender,
+                          weight: pet.weight,
+                          birthday: pet.birthday,
+                          preferences: pet.preferences,
+                          allergies: pet.allergies,
+                          profilePicturePath: pet.profilePictureUrl,
+                        );
+                      },
+                    ),
                   );
                 }
               },
             ),
             const SizedBox(height: 16),
-          StreamBuilder<bool>(
-            stream: getPetVaccinationStatus(),
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return const Center(child: CircularProgressIndicator());
-              } else if (snapshot.hasError) {
-                return Center(child: Text('Error: ${snapshot.error}'));
-              } else {
-                bool isVaccinated = snapshot.data ?? false;
+            StreamBuilder<bool>(
+              stream: getPetVaccinationStatus(),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                } else if (snapshot.hasError) {
+                  return Center(child: Text('Error: ${snapshot.error}'));
+                } else {
+                  bool isVaccinated = snapshot.data ?? false;
 
-                return InfoCard(
-                  title: 'Vaccination Status',
-                  isVaccinated: isVaccinated,
-                  isClickable: true, // Always set to true so the card is tappable
-                  onTap: () {
-                    if (!isVaccinated) {
-                      // Show a dialog prompting to confirm vaccinations
-                      DialogInfo(
-                        headerText: 'Vaccination Confirmation',
-                        subText: 'Has your pet received all the necessary vaccinations?',
-                        confirmText: 'Confirm',
-                        onCancel: () {
-                          Navigator.of(context).pop();
-                        },
-                        onConfirm: () async {
-                          // Show loading dialog
-                          DialogLoading(subtext: "Processing...").build(context);
-                          try {
-                            // Attempt to update vaccination status
-                            await updateVaccinationStatus(petId!, true);
+                  return InfoCard(
+                    title: 'Vaccination Status',
+                    isVaccinated: isVaccinated,
+                    isClickable: true, // Always set to true so the card is tappable
+                    onTap: () {
+                      if (!isVaccinated) {
+                        // Show a dialog prompting to confirm vaccinations
+                        DialogInfo(
+                          headerText: 'Vaccination Confirmation',
+                          subText: 'Has your pet received all the necessary vaccinations?',
+                          confirmText: 'Confirm',
+                          onCancel: () {
+                            Navigator.of(context).pop();
+                          },
+                          onConfirm: () async {
+                            // Show loading dialog
+                            DialogLoading(subtext: "Processing...").build(context);
+                            try {
+                              // Attempt to update vaccination status
+                              await updateVaccinationStatus(petId!, true);
 
-                            // Close the loading dialog
-                            Navigator.of(context).pop(); // Close loading dialog
+                              // Close the loading dialog
+                              Navigator.of(context).pop(); // Close loading dialog
 
-                            // Close the confirmation dialog
-                            Navigator.of(context).pop(); // Close confirmation dialog
+                              // Close the confirmation dialog
+                              Navigator.of(context).pop(); // Close confirmation dialog
 
-                            // Show success dialog
-                            DialogInfo(
-                              headerText: 'Success',
-                              subText: 'Vaccination status updated successfully.',
-                              confirmText: 'OK',
-                              onCancel: () {
-                                Navigator.of(context).pop();
-                              },
-                              onConfirm: () {
-                                Navigator.of(context).pop();
-                              },
-                            ).build(context);
-                          } catch (e) {
-                            // Close loading dialog if there's an error
-                            Navigator.of(context).pop(); // Close loading dialog
+                              // Show success dialog
+                              DialogInfo(
+                                headerText: 'Success',
+                                subText: 'Vaccination status updated successfully.',
+                                confirmText: 'OK',
+                                onCancel: () {
+                                  Navigator.of(context).pop();
+                                },
+                                onConfirm: () {
+                                  Navigator.of(context).pop();
+                                },
+                              ).build(context);
+                            } catch (e) {
+                              // Close loading dialog if there's an error
+                              Navigator.of(context).pop(); // Close loading dialog
 
-                            // Close the confirmation dialog if it's still open
-                            Navigator.of(context).pop(); // Close confirmation dialog
+                              // Close the confirmation dialog if it's still open
+                              Navigator.of(context).pop(); // Close confirmation dialog
 
-                            // Show error dialog
-                            DialogInfo(
-                              headerText: 'Error',
-                              subText: 'Failed to update the vaccination status. Please try again.',
-                              confirmText: 'OK',
-                              onCancel: () {
-                                Navigator.of(context).pop();
-                              },
-                              onConfirm: () {
-                                Navigator.of(context).pop();
-                              },
-                            ).build(context);
-                          }
-                        },
-                      ).build(context);
-                    } else if (snapshot.data == null) {
-                      // Show error message if no vaccination data is found
-                      DialogInfo(
-                        headerText: 'Error',
-                        subText: 'Your pet has not received all the necessary vaccinations.',
-                        confirmText: 'OK',
-                        onCancel: () {
-                          Navigator.of(context).pop();
-                        },
-                        onConfirm: () {
-                          Navigator.of(context).pop();
-                        },
-                      ).build(context);
-                    } else if (isVaccinated) {
-                      // Show a confirmation dialog that the pet is already vaccinated
-                      DialogInfo(
-                        headerText: 'Vaccinated',
-                        subText: 'Your pet has received all the necessary vaccinations.',
-                        confirmText: 'OK',
-                        onCancel: () {
-                          Navigator.of(context).pop();
-                        },
-                        onConfirm: () {
-                          Navigator.of(context).pop();
-                        },
-                      ).build(context);
-                    }
-                  },
-                );
-              }
-            },
-          ),
+                              // Show error dialog
+                              DialogInfo(
+                                headerText: 'Error',
+                                subText: 'Failed to update the vaccination status. Please try again.',
+                                confirmText: 'OK',
+                                onCancel: () {
+                                  Navigator.of(context).pop();
+                                },
+                                onConfirm: () {
+                                  Navigator.of(context).pop();
+                                },
+                              ).build(context);
+                            }
+                          },
+                        ).build(context);
+                      } else if (snapshot.data == null) {
+                        // Show error message if no vaccination data is found
+                        DialogInfo(
+                          headerText: 'Error',
+                          subText: 'Your pet has not received all the necessary vaccinations.',
+                          confirmText: 'OK',
+                          onCancel: () {
+                            Navigator.of(context).pop();
+                          },
+                          onConfirm: () {
+                            Navigator.of(context).pop();
+                          },
+                        ).build(context);
+                      } else if (isVaccinated) {
+                        // Show a confirmation dialog that the pet is already vaccinated
+                        DialogInfo(
+                          headerText: 'Vaccinated',
+                          subText: 'Your pet has received all the necessary vaccinations.',
+                          confirmText: 'OK',
+                          onCancel: () {
+                            Navigator.of(context).pop();
+                          },
+                          onConfirm: () {
+                            Navigator.of(context).pop();
+                          },
+                        ).build(context);
+                      }
+                    },
+                  );
+                }
+              },
+            ),
             const SizedBox(height: 20),
             MedicalCard(title: 'View Activity',
               onTap: () {

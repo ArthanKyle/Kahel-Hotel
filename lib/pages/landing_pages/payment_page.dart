@@ -7,12 +7,15 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:intl/intl.dart';
 import 'package:kahel/widgets/universal/dialog_info.dart';
+import 'package:kahel/widgets/universal/dialog_terms_and_conditions.dart';
 import '../../api/linked_accounts.dart';
+import '../../models/bookingModel.dart';
 import '../../models/linked_accounts_model.dart';
 import '../../models/user.dart';
 import '../../utils/transaction_fee_handler.dart';
 import '../../widgets/universal/auth/arrow_back.dart';
 import '../../widgets/universal/dialog_loading.dart';
+import '../../widgets/universal/dialog_voucher.dart';
 import '../receipts/receipt_page.dart';
 
 class PaymentPage extends StatefulWidget {
@@ -40,11 +43,15 @@ class PaymentPage extends StatefulWidget {
 class _PaymentPageState extends State<PaymentPage> {
   String userName = 'Loading...';
   String userEmail = 'Loading...';
+  String userId = '';
   bool isLoading = true;
   List<LinkAccountsModel> linkedAccounts = [];
   String selectedAccountName = '';
+  bool termsRead = false;
   bool agreeToTerms = false;
   int selectedMethod = 0;
+  String? selectedVoucher;
+  List<String> vouchers = [];
   static const double classicPodWeekdayPrice = 900;
   static const double classicPodWeekendPrice = 1000;
   static const double deluxePodWeekdayPrice = 1000;
@@ -58,27 +65,32 @@ class _PaymentPageState extends State<PaymentPage> {
   }
 
   double calculateTotalPrice() {
-    DateTime fromParsed = DateFormat('yyyy-MM-dd').parseStrict(widget.fromDate);
-    DateTime toParsed = DateFormat('yyyy-MM-dd').parseStrict(widget.toDate);
-    Duration duration = toParsed.difference(fromParsed);
 
-    double pricePerHour = 0;
+    try {
+      // Parse the date and time with the 'yyyy-MM-dd hh:mm a' format
+      DateTime fromParsed = DateFormat('yyyy-MM-dd hh:mm a').parseStrict(widget.fromDate);
+      DateTime toParsed = DateFormat('yyyy-MM-dd hh:mm a').parseStrict(widget.toDate);
+      Duration duration = toParsed.difference(fromParsed);
+      int numberOfNights = duration.inDays > 0 ? duration.inDays : 1;
+      double pricePerNight = 0;
 
-    // Set the price based on the selected package
-    if (widget.selectedPackage == "Classic Pod") {
-      pricePerHour = (fromParsed.weekday == 6 || fromParsed.weekday == 7)
-          ? classicPodWeekendPrice
-          : classicPodWeekdayPrice;
-    } else if (widget.selectedPackage == "Deluxe Pod") {
-      pricePerHour = (fromParsed.weekday == 6 || fromParsed.weekday == 7)
-          ? deluxePodWeekendPrice
-          : deluxePodWeekdayPrice;
+      // Set the price per night based on the package and the day of the week
+      if (widget.selectedPackage == "Classic Pod") {
+        pricePerNight = (fromParsed.weekday == 6 || fromParsed.weekday == 7) // Weekend check
+            ? 1000 // Classic Pod weekend price
+            : 900; // Classic Pod weekday price
+      } else if (widget.selectedPackage == "Deluxe Pod") {
+        pricePerNight = (fromParsed.weekday == 6 || fromParsed.weekday == 7) // Weekend check
+            ? 1100 // Deluxe Pod weekend price
+            : 1000; // Deluxe Pod weekday price
+      }
+      double totalPrice = pricePerNight * numberOfNights;
+      return totalPrice;
+    } catch (e) {
+      print("Error parsing dates: $e");
+      throw const FormatException("Invalid date format. Please use 'yyyy-MM-dd hh:mm a'.");
     }
-
-    double totalPrice = pricePerHour + (duration.inHours > 0 ? duration.inHours : 1); // Ensure at least 1 hour
-    return totalPrice;
   }
-
 
   Future<void> _fetchUserData() async {
     try {
@@ -101,6 +113,7 @@ class _PaymentPageState extends State<PaymentPage> {
       print('Error fetching user data: $e');
     }
   }
+
 
   Future<void> _fetchLinkedAccounts() async {
     try {
@@ -173,7 +186,7 @@ class _PaymentPageState extends State<PaymentPage> {
   }
 
   Widget _buildPaymentForm(BuildContext context) {
-    double totalPrice = calculateTotalPrice(); // Calculate the total price here
+    double totalPrice = calculateTotalPrice();
     return SingleChildScrollView(
       physics: const BouncingScrollPhysics(),
       padding: const EdgeInsets.all(16.0),
@@ -212,8 +225,28 @@ class _PaymentPageState extends State<PaymentPage> {
           buildPaymentInfoTile("To Date", widget.toDate),
           buildPaymentInfoTile("Contact", userEmail),
           const SizedBox(height: 24),
+          buildVoucherInfo(
+              'Kahel Voucher',
+               userId,
+              (){
+                showDialog(
+                    context: context,
+                    builder: (BuildContext context) {
+                      return VoucherSelectionDialog(
+                          userId: userId,
+                          onVoucherSelected:
+                          (selected){
+                            setState(() {
+                              selectedVoucher = selected;
+                            });
+                            Navigator.pop(context);
+                          });
+                    }
+                );
+              }
+          ),
           buildPriceInfo("Sub Total", formatPrice(totalPrice)),
-          buildPriceInfo("Downpayment", formatPrice(totalPrice)),
+          buildPriceInfo("Downpayment", formatPrice(totalPrice / 2)),
           const Divider(thickness: 1.5, color: ColorPalette.gray),
           buildPriceInfo("Total", formatPrice(totalPrice)),
           const SizedBox(height: 12),
@@ -230,14 +263,14 @@ class _PaymentPageState extends State<PaymentPage> {
     required String methodImage,
     required String cardNumber,
     required int value,
-    required VoidCallback onSelected, // Add this parameter
+    required VoidCallback onSelected,
   }) {
     return GestureDetector(
       onTap: () {
         setState(() {
           selectedMethod = value;
         });
-        onSelected(); // Call the onSelected callback when this method is tapped
+        onSelected();
       },
       child: Card(
         color: selectedMethod == value ? ColorPalette.primary : ColorPalette.accentWhite,
@@ -286,6 +319,7 @@ class _PaymentPageState extends State<PaymentPage> {
     );
   }
 
+
   Widget _buildPayButton(BuildContext context) {
     return Center(
       child: ElevatedButton(
@@ -312,117 +346,110 @@ class _PaymentPageState extends State<PaymentPage> {
     DialogLoading(subtext: "Creating...").build(context);
     User? user = FirebaseAuth.instance.currentUser;
 
+
+
     if (user != null) {
-      if (widget.petName != null && widget.fromDate != null &&
-          widget.toDate != null && widget.selectedPackage != null &&
-          widget.selectedPrice != null) {
-        try {
-          print('From Date: ${widget.fromDate}');
-          print('To Date: ${widget.toDate}');
+      try {
+        String transactionId = generateRandomCode(12);
+        double pointsEarned = calculateTotalPrice() * 0.002;
 
-          if (widget.fromDate.isEmpty || widget.toDate.isEmpty) {
-            throw Exception('From Date or To Date cannot be empty.');
-          }
+        BookingModel data = BookingModel(
+          uid: user.uid,
+          petName: widget.petName,
+          fromDate: DateFormat('yyyy-MM-dd hh:mm a').parseStrict(widget.fromDate),
+          toDate: DateFormat('yyyy-MM-dd hh:mm a').parseStrict(widget.toDate),
+          package: widget.selectedPackage,
+          price: calculateTotalPrice().toString(),
+          transactionId: transactionId,
+          paymentMethod: _getSelectedPaymentMethod(),
+        );
 
-          DateTime now = DateTime.now();
-          String formattedDate = DateFormat('MMM dd yyyy').format(now);
-          String formattedTime = DateFormat('h:mm a').format(now);
-          // Update the date format here
-          DateTime fromParsed = DateFormat('yyyy-MM-dd hh:mm a').parseStrict(widget.fromDate);
-          DateTime toParsed = DateFormat('yyyy-MM-dd hh:mm a').parseStrict(widget.toDate);
-
-          if (fromParsed.isAfter(toParsed)) {
-            throw Exception('From Date must be before To Date.');
-          }
-
-          if (widget.selectedPackage == "Half-Day Package") {
-            Duration duration = toParsed.difference(fromParsed);
-            if (duration.inHours < 4) {
-              throw Exception('For half-day packages, the duration must be at least 4 hours.');
-            }
-          }
-
-          double parsedPrice = widget.selectedPrice;
-          String transactionId = generateRandomCode(12);
-
-          // Create the booking
-          await createBooking(
-            uid: user.uid,
-            petName: widget.petName,
-            fromDate: fromParsed,
-            toDate: toParsed,
-            package: widget.selectedPackage,
-            price: parsedPrice.toString(),
-            transactionId: transactionId,
-            paymentMethod:  _getSelectedPaymentMethod(),
-          );
-
-          double pointsEarned = parsedPrice * 0.002;
-
-          DocumentSnapshot userDoc = await FirebaseFirestore.instance
-              .collection('users').doc(user.uid).get();
-          Map<String, dynamic> data = userDoc.data() as Map<String, dynamic>;
-          double currentPawKoins = (data['pawKoins'] ?? 0).toDouble();
-
-          double newPawKoins = currentPawKoins + pointsEarned;
-          await FirebaseFirestore.instance.collection('users')
-              .doc(user.uid)
-              .update({'pawKoins': newPawKoins});
-
-          Navigator.of(context).pop();
-
-          Navigator.of(context).push(
-            MaterialPageRoute(
-              builder: (context) => ReceiptPage(
-                data: TransactionModel(
-                  uid: user.uid,
-                  createdAt: formattedDate,
-                  amount: parsedPrice.toStringAsFixed(2),
-                  amountType: "Booking",
-                  type: "Payment Status",
-                  recipient: "Pet Hotel",
-                  desc: "Your Payment has been successfully done.",
-                  time: DateFormat.jm().format(DateTime.now()),
-                  senderLeftHeadText: "Transfer from",
-                  senderLeftSubText: selectedAccountName,
-                  senderRightHeadText: userName,
-                  senderRightSubText: widget.petName,
-                  recipientLeftHeadText: "To",
-                  recipientLeftSubText: "Kahel's PAWsitive Walks",
-                  recipientRightHeadText: "Package",
-                  recipientRightSubText: widget.selectedPackage,
-                  transactionId: transactionId,
-                  pointsEarned: pointsEarned,
-                  transactionFee: '10.00',
-                ),
-                onExit: () {
-                  Navigator.pushNamedAndRemoveUntil(context, "/", (route) => false);
-                },
-              ),
+        TransactionModel transaction = await createBooking(
+          data: data,
+          uid: user.uid,
+          pointsEarned: pointsEarned,
+          petName: widget.petName,
+          fromDate: DateFormat('yyyy-MM-dd hh:mm a').parseStrict(widget.fromDate),
+          toDate: DateFormat('yyyy-MM-dd hh:mm a').parseStrict(widget.toDate),
+          package: widget.selectedPackage,
+          price: calculateTotalPrice().toString(),
+          paymentMethod: _getSelectedPaymentMethod(),
+        );
+        Navigator.pop(context);
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => ReceiptPage(
+              data: transaction,
+              onExit: () {
+                Navigator.pushNamedAndRemoveUntil(context, "/", (route) => false);
+              },
             ),
-          );
-        } catch (e, stackTrace) {
-          // Print the error and the stack trace to the console
-          print('Error creating booking: $e');
-          print('Stack Trace: $stackTrace');
-          Navigator.of(context).pop();
-          _showErrorDialog('Error creating booking: $e');
-        }
-      } else {
+          ),
+        );
+      } catch (e, stackTrace) {
+        // Handle any errors
+        Navigator.pop(context); // Close loading dialog
         DialogInfo(
-            headerText: "Error!",
-            subText: "Booking details are incomplete.",
-            confirmText: "Confirm",
+          headerText: "Failed",
+          subText: e.toString(),
+          confirmText: "Try again",
           onCancel: () {
-            Navigator.of(context).pop();
+            Navigator.pop(context); // Close dialog
           },
           onConfirm: () {
-            Navigator.of(context).pop();
+            Navigator.pop(context); // Close dialog
           },
         ).build(context);
-        print('Booking details are incomplete.');
+        print('Error creating booking: $e');
+        print('Stack Trace: $stackTrace');
       }
+    } else {
+      Navigator.pop(context); // Close loading dialog if user is null
+      _showErrorDialog('User not logged in.'); // Show error if user is not found
     }
+  }
+
+
+
+  Widget buildVoucherInfo(String title, String userId, VoidCallback onSelectVoucher) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            title,
+            style: const TextStyle(
+              fontSize: 16,
+              fontFamily: 'Poppins',
+              color: ColorPalette.greyish,
+            ),
+          ),
+          GestureDetector(
+            onTap: onSelectVoucher,
+            child: const Row(
+              children: [
+                Text(
+                  'Select Voucher',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontFamily: 'Poppins',
+                    color: ColorPalette.gray,
+                  ),
+                ),
+                SizedBox(width: 4),
+                Icon(
+                  Icons.arrow_forward_ios,
+                  size: 16,
+                  color: ColorPalette.gray,
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
 
@@ -437,7 +464,7 @@ class _PaymentPageState extends State<PaymentPage> {
             style: const TextStyle(
               fontSize: 16,
               fontFamily: 'Poppins',
-              color: ColorPalette.gray,
+              color: ColorPalette.greyish,
             ),
           ),
           Text(
@@ -475,19 +502,20 @@ class _PaymentPageState extends State<PaymentPage> {
               )),
           Text(value,
               style: const TextStyle(
-              fontSize: 16, fontFamily: 'Poppins', fontWeight: FontWeight.w500)),
+              fontSize: 16, fontFamily: 'Poppins', fontWeight: FontWeight.w500
+              )
+          ),
         ],
       ),
     );
   }
 
   Widget buildTermsAndConditions() {
-    return Center( // Center the row
+    return Center(
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
-        crossAxisAlignment: CrossAxisAlignment.center, // Center the checkbox and text vertically
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          // Wrap the Checkbox in a Container to center it vertically
           Container(
             alignment: Alignment.center,
             child: Checkbox(
@@ -499,17 +527,41 @@ class _PaymentPageState extends State<PaymentPage> {
               },
             ),
           ),
-          const Expanded(
-            child: Text(
+          GestureDetector(
+            onTap: () {
+              showDialog(
+                context: context,
+                builder: (context) => TermsAndConditionsDialog(
+                  onCancel: () {
+                    Navigator.of(context).pop();
+                  },
+                  onConfirm: () {
+                    setState(() {
+                      agreeToTerms = true;
+                    });
+                    Navigator.of(context).pop();
+                  },
+                ),
+              );
+            },
+            child: const Text(
               "I agree to the terms and conditions.",
-              style: TextStyle(fontSize: 14, fontFamily: 'Poppins',),
-              textAlign: TextAlign.center, // Center the text
+              style: TextStyle(
+                fontSize: 14,
+                fontFamily: 'Poppins',
+                decoration: TextDecoration.underline,
+                color: Colors.blue, // Optional: Change color to make it look like a link
+              ),
+              textAlign: TextAlign.center,
             ),
           ),
         ],
       ),
     );
   }
+
+
+
   String _getSelectedPaymentMethod() {
     if (selectedMethod < linkedAccounts.length) {
       return linkedAccounts[selectedMethod].bank; // Or another property if you have a specific value

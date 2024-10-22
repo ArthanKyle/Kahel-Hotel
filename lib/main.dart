@@ -5,6 +5,7 @@ import 'package:kahel/pages/auth/log_in_page.dart';
 import 'package:kahel/pages/auth/registration_page.dart';
 import 'package:kahel/pages/auth/registration_pet_page.dart';
 import 'package:kahel/pages/auth/start_pages/onboarding_page.dart';
+import 'package:kahel/pages/landing_page.dart';
 import 'package:kahel/pages/landing_pages/book_page.dart';
 import 'package:kahel/pages/landing_pages/payment_page.dart';
 import 'package:kahel/pages/landing_pages/pet_profile_page.dart';
@@ -60,6 +61,7 @@ class MyApp extends StatelessWidget {
       ),
       initialRoute: '/auth',
       routes: {
+        "/landing" : (context) => const LandingPage(),
         "/auth": (context) => const AuthCheck(),
         "/start": (context) => const OnboardingScreen(),
         "/login": (context) => const SignInPage(),

@@ -2,15 +2,18 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:kahel/widgets/universal/dialog_loading.dart';
+import '../api/auth.dart';
+import '../api/voucher.dart';
 import '../constants/colors.dart';
 import '../utils/index_provider.dart';
 import '../widgets/pawkoin/pawkoin.dart';
 import '../widgets/universal/auth/arrow_back.dart';
 import '../widgets/universal/dialog_info.dart';
 import '../widgets/universal/dialog_unsuccessful.dart';
-import '../widgets/universal/user_status_bar.dart';
 import '../widgets/vouchers/daily_rewards.dart';
 import '../widgets/vouchers/voucher_box.dart';
+import 'dart:math';
 
 class VoucherPage extends StatefulWidget {
   const VoucherPage({Key? key}) : super(key: key);
@@ -22,52 +25,51 @@ class VoucherPage extends StatefulWidget {
 class _VoucherPageState extends State<VoucherPage> {
   DateTime today = DateTime.now();
   List<String> claimedDays = [];
-  double pawKoins = 0;  // Change to double
+  double pawKoins = 0;
   Stream<DocumentSnapshot>? userStream;
   String _timeRemaining = "00:00:00";
   Timer? _timer;
+  User? user; // User variable to hold the current user
 
   @override
   void initState() {
     super.initState();
-    final uid = FirebaseAuth.instance.currentUser?.uid;
-    if (uid != null) {
-      userStream = FirebaseFirestore.instance.collection('users').doc(uid).snapshots();
+    user = getUser(); // Use your getUser() function here
+    if (user != null) {
+      userStream = FirebaseFirestore.instance.collection('users').doc(user!.uid).snapshots();
     }
     fetchUserData();
-    _startTimer(); // Start the timer to update time remaining
+    _startTimer();
   }
 
   Future<void> fetchUserData() async {
-    final uid = FirebaseAuth.instance.currentUser?.uid;
-    if (uid != null) {
-      final userDoc = await FirebaseFirestore.instance.collection('users').doc(uid).get();
+    if (user != null) {
+      final userDoc = await FirebaseFirestore.instance.collection('users').doc(user!.uid).get();
       setState(() {
         claimedDays = List<String>.from(userDoc['claimedDays'] ?? []);
-        pawKoins = (userDoc['pawKoins'] ?? 0).toDouble();  // Ensure it's a double
+        pawKoins = (userDoc['pawKoins'] ?? 0).toDouble();
       });
     }
   }
 
   Future<void> claimReward(String dayText, String points) async {
-    final uid = FirebaseAuth.instance.currentUser?.uid;
-    if (uid != null) {
-      final userDoc = await FirebaseFirestore.instance.collection('users').doc(uid).get();
+    if (user != null) {
+      final userDoc = await FirebaseFirestore.instance.collection('users').doc(user!.uid).get();
       List<String> claimedDays = List<String>.from(userDoc['claimedDays'] ?? []);
-      double pawKoins = (userDoc['pawKoins'] ?? 0).toDouble();  // Ensure it's a double
+      double pawKoins = (userDoc['pawKoins'] ?? 0).toDouble();
 
       if (!claimedDays.contains(dayText)) {
         int rewardPoints = int.tryParse(points.split(' ')[0]) ?? 0;
 
         setState(() {
           claimedDays.add(dayText);
-          pawKoins += rewardPoints;  // Add reward points as double
+          pawKoins += rewardPoints;
         });
 
         try {
-          await FirebaseFirestore.instance.collection('users').doc(uid).update({
+          await FirebaseFirestore.instance.collection('users').doc(user!.uid).update({
             'claimedDays': claimedDays,
-            'pawKoins': pawKoins,  // Store as double
+            'pawKoins': pawKoins,
           });
         } catch (e) {
           print("Error updating Firestore: $e");
@@ -84,7 +86,7 @@ class _VoucherPageState extends State<VoucherPage> {
 
   void _calculateTimeRemaining() {
     final now = DateTime.now();
-    final tomorrow = DateTime(now.year, now.month, now.day + 1); // Assuming rewards reset at midnight
+    final tomorrow = DateTime(now.year, now.month, now.day + 1);
     final difference = tomorrow.difference(now);
 
     final hours = difference.inHours;
@@ -131,7 +133,7 @@ class _VoucherPageState extends State<VoucherPage> {
 
             final userDoc = snapshot.data!;
             List<String> claimedDays = List<String>.from(userDoc['claimedDays'] ?? []);
-            (userDoc['pawKoins'] ?? 0).toDouble();  // Ensure it's a double
+            (userDoc['pawKoins'] ?? 0).toDouble();
 
             return SizedBox(
               height: 150,
@@ -243,15 +245,72 @@ class _VoucherPageState extends State<VoucherPage> {
                   holder: acadVouchs()[index].holderName,
                   imagePath: "assets/images/icons/worktimecuate-1.png",
                   onTap: () {
+                    DialogInfo(
+                      headerText: "Voucher",
+                      subText: "Redeem this voucher for 50.0 pawKoin?",
+                      confirmText: "Confirm",
+                      onCancel: () {
+                        Navigator.pop(context);
+                      },
+                      onConfirm: () async {
+                        DialogLoading(subtext: "Processing...").build(context);
+                        String code = generateVoucherCode(8);
+                        VoucherService voucherService = VoucherService();
+
+                        if (user != null) {
+                          bool success = await voucherService.redeemVoucher(code, user!.uid);
+                          Navigator.of(context).pop(); // Close the loading dialog
+
+                          if (success) {
+                            DialogInfo(
+                              headerText: "Success!",
+                              subText: "The voucher has been claimed.",
+                              confirmText: "Confirm",
+                              onCancel: () {
+                                Navigator.of(context).pop();
+                              },
+                              onConfirm: () {
+                                Navigator.of(context).pop();
+                              },
+                            ).build(context);
+                          } else {
+                            DialogUnsuccessful(
+                              headertext: "Redemption Failed!",
+                              subtext: "An error occurred while redeeming the voucher.",
+                              textButton: "Okay",
+                              callback: () {
+                                Navigator.of(context).pop();
+                              },
+                            ).buildUnsuccessfulScreen(context);
+                          }
+                        } else {
+                          DialogUnsuccessful(
+                            headertext: "Not Logged In!",
+                            subtext: "You need to be logged in to redeem a voucher.",
+                            textButton: "Okay",
+                            callback: () {
+                              Navigator.of(context).pop();
+                            },
+                          ).buildUnsuccessfulScreen(context);
+                        }
+                      },
+                    ).build(context);
                   },
                 );
               },
             ),
           ),
-          const SizedBox(height: 20),
         ],
       ),
     );
+  }
+}
+
+
+String generateVoucherCode(int length) {
+    const String chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    Random random = Random();
+    return List.generate(length, (index) => chars[random.nextInt(chars.length)]).join('');
   }
 
   String getFormattedDay(DateTime date) {
@@ -273,7 +332,7 @@ class _VoucherPageState extends State<VoucherPage> {
       DailyRewards("Day 4", "+5 Koins"),
     ];
   }
-}
+
 
 class VoucherType {
   final String holderName;

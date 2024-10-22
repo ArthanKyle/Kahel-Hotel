@@ -20,6 +20,7 @@ class UserModel {
   List<String> claimedDays;
   String walletAddress;
 
+
   UserModel({
     required this.name,
     required this.email,
@@ -50,6 +51,7 @@ class UserModel {
       lastTransactionDate: json["lastTransactionDate"] ?? '',
       claimedDays: List<String>.from(json["claimedDays"] ?? []),  // Safe casting to List<String>
       walletAddress: json["walletAddress"] ?? '',
+
     );
   }
 
@@ -67,6 +69,7 @@ class UserModel {
     "lastTransactionDate": lastTransactionDate,
     "claimedDays": claimedDays,
     "walletAddress": walletAddress,
+
   };
 
   // Factory method to create UserModel from Firestore DocumentSnapshot
@@ -85,6 +88,7 @@ class UserModel {
       lastTransactionDate: data['lastTransactionDate'] ?? '',
       claimedDays: data['claimedDays'] != null ? List<String>.from(data['claimedDays']) : [],
       walletAddress: data['walletAddress'] ?? '',
+
     );
   }
 

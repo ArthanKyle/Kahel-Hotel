@@ -121,11 +121,10 @@ Future<bool?> checkIfMoreThanFivePets({required String uid}) async {
 
 Future<void> updateVaccinationStatus(String petId, bool isVaccinated) async {
   try {
-    // Update the vaccination status in Firestore
     await FirebaseFirestore.instance
         .collection('pets')
         .doc(petId)
-        .update({'isVaccinated': isVaccinated}); // Field and value to update
+        .update({'isVaccinated': isVaccinated});
   } catch (e) {
     // Handle error if update fails
     print('Error updating vaccination status: $e');

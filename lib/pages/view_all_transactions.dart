@@ -96,7 +96,7 @@ class _ViewAllTransactionsState extends State<ViewAllTransactions> {
                 child: ListView(
                   physics: const BouncingScrollPhysics(),
                   children: const [
-                    TransactionContainer(),
+
                   ],
                 ),
               ),

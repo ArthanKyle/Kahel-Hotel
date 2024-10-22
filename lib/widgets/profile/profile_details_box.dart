@@ -119,18 +119,6 @@ class ProfileDetailsBox extends StatelessWidget {
                 ],
               ),
             ),
-            Positioned(
-              top: 10,
-              right: 10,
-              child: GestureDetector(
-              onTap: () => NotifModal(uid: user!.uid).build(context),
-                child: const Icon(
-                  Icons.notifications_outlined, // Bell icon
-                  color: ColorPalette.accentBlack, // Color to match the theme
-                  size: 28, // Adjust size as needed
-                ),
-              ),
-            ),
           ],
         );
       },

@@ -299,6 +299,7 @@ class _BookServiceState extends State<BookService> {
         suffixIcon: IconButton(
           icon: const Icon(Icons.calendar_today),
           onPressed: () async {
+            // Show date picker
             DateTime? pickedDate = await showDatePicker(
               context: context,
               initialDate: DateTime.now(),
@@ -307,12 +308,14 @@ class _BookServiceState extends State<BookService> {
             );
 
             if (pickedDate != null) {
+              // Show time picker if a date is selected
               TimeOfDay? pickedTime = await showTimePicker(
                 context: context,
                 initialTime: TimeOfDay.now(),
               );
 
               if (pickedTime != null) {
+                // Combine the date and time into a single DateTime object
                 DateTime finalDateTime = DateTime(
                   pickedDate.year,
                   pickedDate.month,
@@ -320,7 +323,9 @@ class _BookServiceState extends State<BookService> {
                   pickedTime.hour,
                   pickedTime.minute,
                 );
-                controller.text = DateFormat('yyyy-MM-dd').format(finalDateTime);
+
+                // Format both the date and time, including AM/PM
+                controller.text = DateFormat('yyyy-MM-dd hh:mm a').format(finalDateTime);
               }
             }
           },
