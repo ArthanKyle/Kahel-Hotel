@@ -14,7 +14,7 @@ class NotificationsRes {
 Future<List<NotificationModel>> apiGetNotifications(
     {required String uid}) async {
   DatabaseReference db =
-      FirebaseDatabase.instance.ref().child("notifications/$uid");
+  FirebaseDatabase.instance.ref().child("notifications/$uid");
   try {
     List<NotificationModel> list = [];
 

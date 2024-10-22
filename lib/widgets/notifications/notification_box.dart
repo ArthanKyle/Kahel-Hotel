@@ -1,15 +1,18 @@
 import 'package:flutter/material.dart';
-import 'package:kahel/constants/colors.dart';
+
+import '../../constants/colors.dart';
 
 class NotificationBox extends StatelessWidget {
   final String date;
   final String sender;
   final String desc;
-  const NotificationBox(
-      {super.key,
-      required this.date,
-      required this.sender,
-      required this.desc});
+
+  const NotificationBox({
+    super.key,
+    required this.date,
+    required this.sender,
+    required this.desc,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -31,10 +34,7 @@ class NotificationBox extends StatelessWidget {
             color: Colors.grey.withOpacity(0.5),
             spreadRadius: 0,
             blurRadius: 2,
-            offset: const Offset(
-              0,
-              2,
-            ),
+            offset: const Offset(0, 2),
           ),
         ],
       ),
@@ -43,7 +43,7 @@ class NotificationBox extends StatelessWidget {
         decoration: const BoxDecoration(
           border: Border(
             bottom: BorderSide(
-              color: ColorPalette.greyish,
+              color: Color.fromARGB(255, 157, 157, 157),
               width: 1,
             ),
           ),
@@ -51,6 +51,22 @@ class NotificationBox extends StatelessWidget {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
+            Container(
+              width: 40,
+              height: 40,
+              decoration: const BoxDecoration(
+                shape: BoxShape.circle,
+                color: ColorPalette.primary,
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(5.0),
+                child: Image.asset(
+                  "assets/images/icons/paws.png",
+                  height: 30,
+                  width: 30,
+                ),
+              ),
+            ),
             const SizedBox(width: 20),
             Expanded(
               child: Column(
@@ -65,18 +81,19 @@ class NotificationBox extends StatelessWidget {
                       fontWeight: FontWeight.bold,
                     ),
                   ),
+                  const SizedBox(height: 2),
                   Text(
                     desc,
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
                       fontFamily: "Montserrat",
                       fontSize: 10,
-                      fontWeight: FontWeight.w300,
+                      fontWeight: FontWeight.w400,
                     ),
                   ),
                 ],
               ),
-            )
+            ),
           ],
         ),
       ),

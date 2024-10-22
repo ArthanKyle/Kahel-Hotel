@@ -54,8 +54,8 @@ class NotificationModel {
       );
 
   Map<String, dynamic> toJson() => {
-        "createdAt": createdAt,
-        "desc": desc,
-        "sender": sender,
-      };
+    "createdAt": createdAt,
+    "desc": desc,
+    "sender": sender,
+  };
 }

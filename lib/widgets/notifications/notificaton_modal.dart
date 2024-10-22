@@ -45,6 +45,7 @@ class NotifModal {
                       ),
                       GestureDetector(
                         onTap: () {
+                          Navigator.pop(context);
                         },
                         child: const Icon(
                           Icons.close,

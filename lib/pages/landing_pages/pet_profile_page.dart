@@ -250,7 +250,6 @@ class _PetProfilePageState extends State<PetProfilePage> {
                           },
                         ).build(context);
                       } else if (snapshot.data == null) {
-                        // Show error message if no vaccination data is found
                         DialogInfo(
                           headerText: 'Error',
                           subText: 'Your pet has not received all the necessary vaccinations.',
@@ -263,7 +262,6 @@ class _PetProfilePageState extends State<PetProfilePage> {
                           },
                         ).build(context);
                       } else if (isVaccinated) {
-                        // Show a confirmation dialog that the pet is already vaccinated
                         DialogInfo(
                           headerText: 'Vaccinated',
                           subText: 'Your pet has received all the necessary vaccinations.',

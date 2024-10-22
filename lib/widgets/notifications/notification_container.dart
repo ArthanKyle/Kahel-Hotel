@@ -1,11 +1,10 @@
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
-import '../../../models/notification.dart';
+import '../../models/notification.dart';
 import 'notification_box.dart';
 import 'notification_empty.dart';
 import 'notification_error.dart';
 import 'notification_loading.dart';
-
 
 class NotificationContainer extends StatefulWidget {
   final String uid;
@@ -19,7 +18,7 @@ class _NotificationContainerState extends State<NotificationContainer> {
   @override
   Widget build(BuildContext context) {
     DatabaseReference db =
-        FirebaseDatabase.instance.ref().child("notifications/${widget.uid}");
+    FirebaseDatabase.instance.ref().child("notifications/${widget.uid}");
 
     return StreamBuilder(
       stream: db.onValue,

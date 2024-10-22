@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart'; // Import Firestore
 import 'package:firebase_auth/firebase_auth.dart'; // Import FirebaseAuth for user authentication
+import 'package:kahel/utils/index_provider.dart';
 import '../../widgets/mpin/mpin.dart';
 
 class PawkoinConverter extends StatefulWidget {
@@ -15,19 +16,25 @@ class _PawkoinConverterState extends State<PawkoinConverter> {
   String conversionRate = "30.20"; // Placeholder conversion rate
   String enteredPawKoins = ""; // Start with an empty string
 
+  @override
+  void initState() {
+    super.initState();
+    fetchPawKoins(); // Call the function to fetch PawKoins when the widget initializes
+  }
+
   Future<void> fetchPawKoins() async {
     try {
       User? user = FirebaseAuth.instance.currentUser; // Get current user
       if (user != null) {
-        // Fetch PawKoins from Firestore
+        String uid = user.uid; // Get the UID of the current user
         DocumentSnapshot userDoc = await FirebaseFirestore.instance
             .collection('users')
-            .doc(user.uid)
+            .doc(uid)
             .get();
 
         if (userDoc.exists) {
           setState(() {
-            pawKoins = userDoc.get('pawKoins') ?? 0.0; // Get PawKoins from user doc
+            pawKoins = userDoc.get('pawKoins')?.toDouble() ?? 0.0;
           });
         }
       }
@@ -44,7 +51,7 @@ class _PawkoinConverterState extends State<PawkoinConverter> {
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () {
-            Navigator.pop(context);
+            changePage(index: 0, context: context);
           },
         ),
       ),
@@ -52,7 +59,6 @@ class _PawkoinConverterState extends State<PawkoinConverter> {
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
-            // Paw Koins balance display
             Container(
               padding: const EdgeInsets.all(16.0),
               decoration: BoxDecoration(
@@ -146,7 +152,6 @@ class _PawkoinConverterState extends State<PawkoinConverter> {
             ),
             const SizedBox(height: 20),
 
-
             Container(
               padding: const EdgeInsets.all(20.0), // Increased padding
               width: 370,
@@ -191,7 +196,7 @@ class _PawkoinConverterState extends State<PawkoinConverter> {
     );
   }
 
-// Generate number buttons (updated)
+  // Generate number buttons (updated)
   List<Widget> generateNumberButtons() {
     List<Widget> numberButtons = [];
 
@@ -239,11 +244,9 @@ class _PawkoinConverterState extends State<PawkoinConverter> {
   void deletePIN() {
     if (enteredPawKoins.isNotEmpty) {
       setState(() {
-        enteredPawKoins = enteredPawKoins.substring(0, enteredPawKoins.length - 1);
+        enteredPawKoins =
+            enteredPawKoins.substring(0, enteredPawKoins.length - 1);
       });
     }
   }
 }
-
-
-
