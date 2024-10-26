@@ -4,7 +4,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 
 class PetProfilePicture extends StatefulWidget {
-  final Function(String url) onPictureSelected; // Accept a callback function
+  final Function(String url) onPictureSelected;
 
   const PetProfilePicture({Key? key, required this.onPictureSelected}) : super(key: key);
 
@@ -24,6 +24,7 @@ class _PetProfilePictureState extends State<PetProfilePicture> {
       setState(() {
         _image = File(pickedFile.path);
       });
+      _uploadImage(); // Automatically upload the image after picking
     }
   }
 
@@ -49,8 +50,7 @@ class _PetProfilePictureState extends State<PetProfilePicture> {
         _isUploading = false;
       });
 
-      // Invoke the callback to pass the uploaded image URL to the parent widget
-      widget.onPictureSelected(downloadUrl);
+      widget.onPictureSelected(downloadUrl); // Notify parent widget
 
       print('Pet profile picture uploaded: $downloadUrl');
     } catch (e) {
@@ -80,12 +80,7 @@ class _PetProfilePictureState extends State<PetProfilePicture> {
           ),
         ),
         const SizedBox(height: 10),
-        _isUploading
-            ? const CircularProgressIndicator()
-            : ElevatedButton(
-          onPressed: _uploadImage,
-          child: const Text("Upload Pet Profile Picture"),
-        ),
+        if (_isUploading) const CircularProgressIndicator(),
       ],
     );
   }

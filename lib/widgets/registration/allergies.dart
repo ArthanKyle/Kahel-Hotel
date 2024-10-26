@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
-
 import '../../../constants/colors.dart';
 import '../../../constants/strings.dart';
-
 
 class AllergiesDropdown extends StatefulWidget {
   final String labelText;
@@ -10,34 +8,37 @@ class AllergiesDropdown extends StatefulWidget {
   final Function(List<String>) onAllergiesChanged;
 
   const AllergiesDropdown({
-    super.key,
+    Key? key,
     required this.labelText,
     required this.controller,
     required this.onAllergiesChanged,
-  });
+  }) : super(key: key);
 
   @override
   _AllergiesDropdownState createState() => _AllergiesDropdownState();
 }
 
 class _AllergiesDropdownState extends State<AllergiesDropdown> {
-  List<String> _selectedAllergies = []; // Initialize with an empty list
+  List<String> _selectedAllergies = [];
 
   @override
   void initState() {
     super.initState();
-    // Initialize _selectedAllergies with the controller's text if not empty
     _selectedAllergies = widget.controller.text.isNotEmpty
         ? widget.controller.text.split(', ')
         : [];
   }
 
-  void _updateAllergies(List<String> updatedAllergies) {
+  void _updateAllergies(String value) {
     setState(() {
-      _selectedAllergies = updatedAllergies;
-      widget.controller.text = updatedAllergies.join(', ');
+      if (_selectedAllergies.contains(value)) {
+        _selectedAllergies.remove(value);
+      } else {
+        _selectedAllergies.add(value);
+      }
+      widget.controller.text = _selectedAllergies.join(', ');
+      widget.onAllergiesChanged(_selectedAllergies);
     });
-    widget.onAllergiesChanged(_selectedAllergies);
   }
 
   @override
@@ -56,15 +57,7 @@ class _AllergiesDropdownState extends State<AllergiesDropdown> {
         ),
         const SizedBox(height: 8),
         PopupMenuButton<String>(
-          onSelected: (value) {
-            List<String> updatedAllergies = List.from(_selectedAllergies);
-            if (updatedAllergies.contains(value)) {
-              updatedAllergies.remove(value);
-            } else {
-              updatedAllergies.add(value);
-            }
-            _updateAllergies(updatedAllergies);
-          },
+          onSelected: _updateAllergies,
           itemBuilder: (BuildContext context) {
             return KahelStrings.foodAllergies.map((String value) {
               return PopupMenuItem<String>(
@@ -102,17 +95,20 @@ class _AllergiesDropdownState extends State<AllergiesDropdown> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  _selectedAllergies.isEmpty
-                      ? 'Select Allergies'
-                      : _selectedAllergies.join(', '),
-                  style: TextStyle(
-                    color: _selectedAllergies.isEmpty
-                        ? ColorPalette.accentBlack.withOpacity(0.5)
-                        : ColorPalette.accentBlack,
-                    fontFamily: "Poppins",
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
+                Flexible(
+                  child: Text(
+                    _selectedAllergies.isEmpty
+                        ? 'Select Allergies'
+                        : _selectedAllergies.join(', '),
+                    style: TextStyle(
+                      color: _selectedAllergies.isEmpty
+                          ? ColorPalette.accentBlack.withOpacity(0.5)
+                          : ColorPalette.accentBlack,
+                      fontFamily: "Poppins",
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      overflow: TextOverflow.ellipsis, // Avoid overflow
+                    ),
                   ),
                 ),
                 const Icon(Icons.arrow_drop_down, color: ColorPalette.accentBlack),
