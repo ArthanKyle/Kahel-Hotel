@@ -54,7 +54,7 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'Kahel',
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSwatch().copyWith(
+            colorScheme: ColorScheme.fromSwatch().copyWith(
           primary: ColorPalette.primary,
           secondary: ColorPalette.secondary,
         ),

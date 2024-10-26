@@ -116,7 +116,6 @@ Future<TransactionModel> createBooking({
         transactionFee: '10.00', // Assuming a fixed fee, adjust if necessary
       );
 
-      // Optionally save the transaction to Firestore
       await apiSetTransactions(transaction: transaction);
 
       return transaction; // Return the created transaction

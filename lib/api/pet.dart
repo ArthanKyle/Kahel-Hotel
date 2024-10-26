@@ -30,32 +30,28 @@ Future<List<PetModel>> getPetData({required String uid}) async {
 }
 
 
-Stream<double> getPetWalkProgress({required String uid}) {
+
+Stream<double> getPetWalkProgress({required String uid, required String petId}) {
   try {
+    // Listen to the specific pet's document based on petId
     return FirebaseFirestore.instance
         .collection('pets')
-        .where('uid', isEqualTo: uid)
+        .doc(petId)  // Fetch the document for the specific pet
         .snapshots()
-        .map((querySnapshot) {
-      if (querySnapshot.docs.isEmpty) {
-        return 0.0; // No pets found
+        .map((docSnapshot) {
+      if (!docSnapshot.exists) {
+        return 0.0; // Return 0.0 if the pet document doesn't exist
       }
-
-      // Assume there's only one pet per UID, otherwise adjust to handle multiple pets
-      DocumentSnapshot doc = querySnapshot.docs.first;
-      PetModel pet = PetModel.fromSnapshot(doc).copyWith(petId: doc.id);
-
-      // Convert walk field to double, assuming it's a string in Firestore
-      return double.tryParse(pet.walk) ?? 0.0;
+      PetModel pet = PetModel.fromSnapshot(docSnapshot);
+      return double.tryParse(pet.walk) ?? 0.0; // Default to 0.0 if parsing fails
     });
   } catch (err) {
     if (err is FirebaseException) {
-      throw "Error: ${err.message}";
+      throw "Error: ${err.message}"; // Handle Firebase specific errors
     }
-    throw "Error: ${err.toString()}";
+    throw "Error: ${err.toString()}"; // Handle other errors
   }
 }
-
 
 
 Future<void> createPet({

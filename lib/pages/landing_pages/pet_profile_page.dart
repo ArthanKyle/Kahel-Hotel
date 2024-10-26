@@ -2,10 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:kahel/widgets/landing/cards/medical_card.dart';
-import 'package:kahel/widgets/landing/cards/vaccination_card.dart';
 import 'package:kahel/widgets/universal/dialog_info.dart';
 import 'package:kahel/widgets/universal/dialog_loading.dart';
-import 'package:kahel/widgets/universal/dialog_vaccine.dart';
 import '../../api/auth.dart';
 import '../../api/pet.dart';
 import '../../constants/colors.dart';
@@ -16,7 +14,6 @@ import '../../widgets/landing/cards/pet_details.dart';
 import '../../widgets/notifications/notificaton_modal.dart';
 import '../../widgets/universal/auth/add.dart';
 import '../../widgets/universal/auth/arrow_back.dart';
-import '../auth/registration_pet_page.dart';
 
 class PetProfilePage extends StatefulWidget {
   const PetProfilePage({super.key});
@@ -26,16 +23,15 @@ class PetProfilePage extends StatefulWidget {
 }
 
 class _PetProfilePageState extends State<PetProfilePage> {
-  String? petName;
-  String? petId; // Added petId
-  String petProfilePictureUrl = "";
+  List<PetModel> pets = [];
   User? user;
+  int currentIndex = 0;
 
   @override
   void initState() {
     user = getUser();
     super.initState();
-    _loadPetData(); // Loading the pet data
+    _loadPetData();
   }
 
   Future<void> _loadPetData() async {
@@ -44,44 +40,34 @@ class _PetProfilePageState extends State<PetProfilePage> {
       QuerySnapshot petsSnapshot = await FirebaseFirestore.instance
           .collection('pets')
           .where('uid', isEqualTo: user.uid)
-          .limit(1) // Fetch only the first pet for performance
           .get();
 
       if (petsSnapshot.docs.isNotEmpty) {
         setState(() {
-          petId = petsSnapshot.docs.first.id; // Set petId for use later
+          pets = petsSnapshot.docs.map((doc) {
+            return PetModel.fromSnapshot(doc); // Use fromSnapshot method
+          }).toList();
         });
       }
     }
   }
 
-  Stream<bool> getPetVaccinationStatus() {
-    if (petId == null) {
-      return Stream.error("Pet ID is not available");
-    }
+  Stream<bool> getPetVaccinationStatus(String petId) {
     return FirebaseFirestore.instance
         .collection('pets')
-        .doc(petId) // Use the petId to get vaccination status
+        .doc(petId)
         .snapshots()
         .map((snapshot) {
       if (!snapshot.exists) {
         throw Exception("No vaccination data available");
       }
-      return snapshot.get('isVaccinated') ?? false; // Default to false if not present
+      return snapshot.get('isVaccinated') ?? false;
     });
   }
 
-  Stream<QuerySnapshot<Object?>> _getPetStream() {
-    User? user = FirebaseAuth.instance.currentUser;
-    if (user == null) {
-      return Stream.empty(); // Return an empty stream if no user is logged in
-    }
-    return FirebaseFirestore.instance
-        .collection('pets')
-        .where('uid', isEqualTo: user.uid)
-        .snapshots(); // Listen to real-time updates for all pets of the user
+  void _updateVaccinationStatus(String petId, bool isVaccinated) async {
+    await updateVaccinationStatus(petId, isVaccinated);
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -101,7 +87,6 @@ class _PetProfilePageState extends State<PetProfilePage> {
                   left: 0,
                   child: ArrowBack(
                     onTap: () {
-                      // Now using named parameters for the changePage function
                       changePage(index: 0, context: context);
                     },
                   ),
@@ -118,15 +103,14 @@ class _PetProfilePageState extends State<PetProfilePage> {
                 Positioned(
                   right: 0,
                   child: Row(
-                    mainAxisSize: MainAxisSize.min, // Ensures the icons don't take up unnecessary space
+                    mainAxisSize: MainAxisSize.min,
                     children: [
                       Add(
                         onTap: () {
-                          // Navigate to add page
                           changePage(index: 7, context: context);
                         },
                       ),
-                      const SizedBox(width: 5), // Space between bell and add button
+                      const SizedBox(width: 5),
                       GestureDetector(
                         onTap: () => NotifModal(uid: user!.uid).build(context),
                         child: Image.asset(
@@ -141,45 +125,33 @@ class _PetProfilePageState extends State<PetProfilePage> {
               ],
             ),
             const SizedBox(height: 20),
-            StreamBuilder<QuerySnapshot<Object?>>(
-              stream: _getPetStream(),
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator());
-                } else if (snapshot.hasError) {
-                  return Center(child: Text('Error: ${snapshot.error}'));
-                } else if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-                  return const Center(child: Text('No pet data available'));
-                } else {
-                  List<PetModel> pets = snapshot.data!.docs
-                      .map((doc) => PetModel.fromJson(doc.data() as Map<String, dynamic>))
-                      .toList();
-
-                  return SizedBox(
-                    height: 220, // Adjust height as needed
-                    child: PageView.builder(
-                      itemCount: pets.length,
-                      itemBuilder: (context, index) {
-                        PetModel pet = pets[index];
-                        return PetDetailsCard(
-                          name: pet.petName,
-                          breed: pet.petBreed,
-                          gender: pet.gender,
-                          weight: pet.weight,
-                          birthday: pet.birthday,
-                          preferences: pet.preferences,
-                          allergies: pet.allergies,
-                          profilePicturePath: pet.profilePictureUrl,
-                        );
-                      },
-                    ),
+            SizedBox(
+              height: 290,
+              child: PageView.builder(
+                itemCount: pets.length,
+                onPageChanged: (index) {
+                  setState(() {
+                    currentIndex = index;
+                  });
+                },
+                itemBuilder: (context, index) {
+                  PetModel pet = pets[index];
+                  return PetDetailsCard(
+                    name: pet.petName,
+                    breed: pet.petBreed,
+                    gender: pet.gender,
+                    weight: pet.weight,
+                    birthday: pet.birthday,
+                    preferences: pet.preferences,
+                    allergies: pet.allergies,
+                    profilePicturePath: pet.profilePictureUrl,
                   );
-                }
-              },
+                },
+              ),
             ),
             const SizedBox(height: 16),
             StreamBuilder<bool>(
-              stream: getPetVaccinationStatus(),
+              stream: getPetVaccinationStatus(pets[currentIndex].petId), // Use petId
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return const Center(child: CircularProgressIndicator());
@@ -191,31 +163,21 @@ class _PetProfilePageState extends State<PetProfilePage> {
                   return InfoCard(
                     title: 'Vaccination Status',
                     isVaccinated: isVaccinated,
-                    isClickable: true, // Always set to true so the card is tappable
+                    isClickable: true,
                     onTap: () {
                       if (!isVaccinated) {
-                        // Show a dialog prompting to confirm vaccinations
                         DialogInfo(
                           headerText: 'Vaccination Confirmation',
-                          subText: 'Has your pet received all the necessary vaccinations?',
+                          subText: 'Has ${pets[currentIndex].petName} received all necessary vaccinations?',
                           confirmText: 'Confirm',
                           onCancel: () {
                             Navigator.of(context).pop();
                           },
                           onConfirm: () async {
-                            // Show loading dialog
                             DialogLoading(subtext: "Processing...").build(context);
                             try {
-                              // Attempt to update vaccination status
-                              await updateVaccinationStatus(petId!, true);
-
-                              // Close the loading dialog
+                              _updateVaccinationStatus(pets[currentIndex].petId, true); // Use petId
                               Navigator.of(context).pop(); // Close loading dialog
-
-                              // Close the confirmation dialog
-                              Navigator.of(context).pop(); // Close confirmation dialog
-
-                              // Show success dialog
                               DialogInfo(
                                 headerText: 'Success',
                                 subText: 'Vaccination status updated successfully.',
@@ -228,13 +190,7 @@ class _PetProfilePageState extends State<PetProfilePage> {
                                 },
                               ).build(context);
                             } catch (e) {
-                              // Close loading dialog if there's an error
                               Navigator.of(context).pop(); // Close loading dialog
-
-                              // Close the confirmation dialog if it's still open
-                              Navigator.of(context).pop(); // Close confirmation dialog
-
-                              // Show error dialog
                               DialogInfo(
                                 headerText: 'Error',
                                 subText: 'Failed to update the vaccination status. Please try again.',
@@ -249,22 +205,10 @@ class _PetProfilePageState extends State<PetProfilePage> {
                             }
                           },
                         ).build(context);
-                      } else if (snapshot.data == null) {
-                        DialogInfo(
-                          headerText: 'Error',
-                          subText: 'Your pet has not received all the necessary vaccinations.',
-                          confirmText: 'OK',
-                          onCancel: () {
-                            Navigator.of(context).pop();
-                          },
-                          onConfirm: () {
-                            Navigator.of(context).pop();
-                          },
-                        ).build(context);
-                      } else if (isVaccinated) {
+                      } else {
                         DialogInfo(
                           headerText: 'Vaccinated',
-                          subText: 'Your pet has received all the necessary vaccinations.',
+                          subText: '${pets[currentIndex].petName} has received all necessary vaccinations.',
                           confirmText: 'OK',
                           onCancel: () {
                             Navigator.of(context).pop();
@@ -280,7 +224,8 @@ class _PetProfilePageState extends State<PetProfilePage> {
               },
             ),
             const SizedBox(height: 20),
-            MedicalCard(title: 'View Activity',
+            MedicalCard(
+              title: 'View Activity',
               onTap: () {
                 changePage(index: 5, context: context);
               },
