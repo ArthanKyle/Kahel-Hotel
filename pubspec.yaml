@@ -71,7 +71,8 @@ dev_dependencies:
   image_picker: ^0.8.7+4
   shared_preferences: ^2.3.2
   flutter_typeahead: ^4.0.0
-
+  geolocator: ^9.0.2
+  google_maps_flutter: ^2.0.6
 
 
 
