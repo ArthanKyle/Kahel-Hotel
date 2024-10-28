@@ -51,6 +51,7 @@ class _PaymentPageState extends State<PaymentPage> {
   bool agreeToTerms = false;
   int selectedMethod = 0;
   String? selectedVoucher;
+  double discountValue = 0.0;
   List<String> vouchers = [];
   static const double classicPodWeekdayPrice = 900;
   static const double classicPodWeekendPrice = 1000;
@@ -226,25 +227,28 @@ class _PaymentPageState extends State<PaymentPage> {
           buildPaymentInfoTile("Contact", userEmail),
           const SizedBox(height: 24),
           buildVoucherInfo(
-              'Kahel Voucher',
-               userId,
-              (){
-                showDialog(
-                    context: context,
-                    builder: (BuildContext context) {
-                      return VoucherSelectionDialog(
-                          userId: userId,
-                          onVoucherSelected:
-                          (selected){
-                            setState(() {
-                              selectedVoucher = selected;
-                            });
-                            Navigator.pop(context);
-                          });
-                    }
-                );
-              }
+            'Kahel Voucher',
+            userId,
+                () {
+              showDialog(
+                context: context,
+                builder: (BuildContext context) {
+                  return VoucherSelectionDialog(
+                    userId: userId,
+                    onVoucherSelected: (selectedVoucher, discountValue) {
+                      setState(() {
+                        // Assuming you have a way to store or display the discount value as well
+                        this.selectedVoucher = selectedVoucher;
+                        this.discountValue = discountValue; // Update discount value accordingly
+                      });
+                      Navigator.pop(context);
+                    },
+                  );
+                },
+              );
+            },
           ),
+
           buildPriceInfo("Sub Total", formatPrice(totalPrice)),
           buildPriceInfo("Downpayment", formatPrice(totalPrice / 2)),
           const SizedBox(height: 5),

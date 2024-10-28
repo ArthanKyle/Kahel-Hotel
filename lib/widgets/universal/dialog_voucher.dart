@@ -1,23 +1,37 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
-Future<List<String>> fetchUserVouchers(String userId) async {
+Future<List<Map<String, dynamic>>> fetchUserVouchers(String userId) async {
   try {
+    // Ensure the userId is not null or empty before querying
+    if (userId.isEmpty) {
+      throw Exception('User ID cannot be empty');
+    }
+
+    // Fetch the user vouchers from Firestore
     final snapshot = await FirebaseFirestore.instance
-        .collection('vouchers')
+        .collection('redemptions')
         .where('userId', isEqualTo: userId)
         .get();
 
-    return snapshot.docs.map((doc) => doc['voucherName'] as String).toList();
+    // Map the documents to a list of maps including the voucher code and discount value
+    return snapshot.docs.map((doc) {
+      return {
+        'voucherCode': doc['voucherCode'] ?? 'N/A', // Provide a default value if absent
+        'discountValue': (doc['discountValue'] ?? 0.0) as double, // Ensure a default value
+      };
+    }).toList();
   } catch (e) {
     print('Error fetching vouchers: $e');
-    return [];
+    return []; // Return an empty list on error
   }
 }
 
+
+
 class VoucherSelectionDialog extends StatelessWidget {
   final String userId;
-  final Function(String) onVoucherSelected;
+  final Function(String, double) onVoucherSelected; // Adjusted to include discount value
 
   const VoucherSelectionDialog({
     Key? key,
@@ -27,7 +41,7 @@ class VoucherSelectionDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder<List<String>>(
+    return FutureBuilder<List<Map<String, dynamic>>>(
       future: fetchUserVouchers(userId),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
@@ -71,29 +85,33 @@ class VoucherSelectionDialog extends StatelessWidget {
                   ),
                   const SizedBox(height: 10),
                   Expanded(
-                    child: ListView(
-                      shrinkWrap: true,
-                      children: vouchers.map((voucher) {
+                    child: ListView.builder(
+                      itemCount: vouchers.length,
+                      itemBuilder: (context, index) {
                         return ListTile(
-                          title: Text(voucher),
+                          title: Text(vouchers[index]['voucherCode']),
+                          subtitle: Text("Discount: ${vouchers[index]['discountValue']}"), // Show discount value
                           onTap: () {
-                            onVoucherSelected(voucher);
+                            // Pass both voucher code and discount value to the callback
+                            onVoucherSelected(
+                              vouchers[index]['voucherCode'],
+                              vouchers[index]['discountValue'],
+                            );
                             Navigator.pop(context);
                           },
                         );
-                      }).toList(),
+                      },
                     ),
                   ),
                   const SizedBox(height: 10),
                   Row(
                     children: [
                       Expanded(
-                        child: GestureDetector(
-                          onTap: () => Navigator.pop(context),
-                          child: Text(
+                        child: TextButton(
+                          onPressed: () => Navigator.pop(context),
+                          child: const Text(
                             'Cancel',
-                            textAlign: TextAlign.center,
-                            style: const TextStyle(
+                            style: TextStyle(
                               color: Colors.black,
                               fontFamily: 'Montserrat',
                               fontWeight: FontWeight.w700,
@@ -106,7 +124,7 @@ class VoucherSelectionDialog extends StatelessWidget {
                       Expanded(
                         child: ElevatedButton(
                           onPressed: () {
-                            // You can implement the action here if needed
+                            // Optional: Implement any additional actions before closing
                             Navigator.pop(context); // Close the dialog
                           },
                           style: ElevatedButton.styleFrom(
@@ -188,7 +206,7 @@ class VoucherSelectionDialog extends StatelessWidget {
 }
 
 // Usage: Call this function to show the voucher dialog
-void showVoucherDialog(BuildContext context, String userId, Function(String) onVoucherSelected) {
+void showVoucherDialog(BuildContext context, String userId, Function(String, double) onVoucherSelected) {
   showDialog(
     context: context,
     builder: (BuildContext context) {

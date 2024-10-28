@@ -11,7 +11,6 @@ class GPSPage extends StatefulWidget {
 
 class _GPSPageState extends State<GPSPage> {
 
-
   @override
   void initState() {
     super.initState();
@@ -39,5 +38,4 @@ class _GPSPageState extends State<GPSPage> {
       ),
     );
   }
-  }
-
+}

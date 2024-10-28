@@ -45,7 +45,7 @@ class _ProfilePageState extends State<ProfilePage> {
             onClose: () {},
           ),
           const SizedBox(height: 10),
-          const Text("Recent Booking",
+          const Text("Recent Transactions",
             style: TextStyle(
               fontFamily: 'Poppins',
               fontWeight: FontWeight.w800,

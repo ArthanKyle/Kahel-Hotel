@@ -29,12 +29,12 @@ class _VoucherPageState extends State<VoucherPage> {
   Stream<DocumentSnapshot>? userStream;
   String _timeRemaining = "00:00:00";
   Timer? _timer;
-  User? user; // User variable to hold the current user
+  User? user;
 
   @override
   void initState() {
     super.initState();
-    user = getUser(); // Use your getUser() function here
+    user = FirebaseAuth.instance.currentUser; // Get current user
     if (user != null) {
       userStream = FirebaseFirestore.instance.collection('users').doc(user!.uid).snapshots();
     }
@@ -245,38 +245,84 @@ class _VoucherPageState extends State<VoucherPage> {
                   holder: acadVouchs()[index].holderName,
                   imagePath: "assets/images/icons/worktimecuate-1.png",
                   onTap: () {
-                    DialogInfo(
+                    DialogInfo dialogInfo = DialogInfo(
                       headerText: "Voucher",
-                      subText: "Redeem this voucher for 50.0 pawKoin?",
+                      subText: "Claim this voucher for 50.0 pawKoin?",
                       confirmText: "Confirm",
                       onCancel: () {
                         Navigator.pop(context);
                       },
                       onConfirm: () async {
-                        DialogLoading(subtext: "Processing...").build(context);
-                        String code = generateVoucherCode(8);
-                        VoucherService voucherService = VoucherService();
+                        DialogLoading loadingDialog = DialogLoading(subtext: 'Processing....');
+                        loadingDialog.build(context); // Show loading dialog
 
-                        if (user != null) {
-                          bool success = await voucherService.redeemVoucher(code, user!.uid);
-                          Navigator.of(context).pop(); // Close the loading dialog
+                        User? currentUser = FirebaseAuth.instance.currentUser; // Get the current user
+                        if (currentUser != null) {
+                          String userId = currentUser.uid;
+                          String userName = currentUser.displayName ?? "Unknown User"; // Get username
 
-                          if (success) {
-                            DialogInfo(
-                              headerText: "Success!",
-                              subText: "The voucher has been claimed.",
-                              confirmText: "Confirm",
-                              onCancel: () {
-                                Navigator.of(context).pop();
-                              },
-                              onConfirm: () {
-                                Navigator.of(context).pop();
-                              },
-                            ).build(context);
-                          } else {
+                          // Generate a voucher code
+                          String voucherCode = generateVoucherCode(8); // Generate a voucher code of length 8
+                          double discountValue = 10.0; // Set the discount value for the voucher
+                          double pawKoinDeduction = 50.0; // Deduct 50 pawKoins from the user's balance
+
+                          UserService userService = UserService();
+
+                          try {
+                            // First, deduct the 50 pawKoins
+                            bool deductionSuccess = await userService.deductPawKoin(userId, pawKoinDeduction);
+
+                            if (deductionSuccess) {
+                              // If deduction is successful, proceed to redeem the voucher
+                              bool redemptionSuccess = await userService.redeemVoucher(userId, userName, voucherCode, discountValue);
+
+                              Navigator.of(context).pop(); // Close loading dialog
+
+                              if (redemptionSuccess) {
+                                // Close the dialog for claiming and show the success dialog
+                                Navigator.of(context).pop(); // Close the claim dialog
+                                DialogInfo(
+                                  headerText: "Success!",
+                                  subText: "Voucher redeemed successfully.",
+                                  confirmText: "Okay",
+                                  onCancel: () {
+                                    Navigator.of(context).pop();
+                                  },
+                                  onConfirm: () {
+                                    Navigator.of(context).pop(); // Close dialog
+                                  },
+                                ).build(context);
+                              } else {
+                                // Log error for failed redemption
+                                print("Voucher redemption failed for user: $userId, voucherCode: $voucherCode");
+                                DialogUnsuccessful(
+                                  headertext: "Redemption Failed!",
+                                  subtext: "Could not redeem the voucher. Please try again.",
+                                  textButton: "Okay",
+                                  callback: () {
+                                    Navigator.of(context).pop();
+                                  },
+                                ).buildUnsuccessfulScreen(context);
+                              }
+                            } else {
+                              // Handle case where pawKoin deduction failed
+                              Navigator.of(context).pop(); // Close loading dialog
+                              DialogUnsuccessful(
+                                headertext: "Deduction Failed!",
+                                subtext: "Not enough pawKoin to redeem this voucher. Please check your balance.",
+                                textButton: "Okay",
+                                callback: () {
+                                  Navigator.of(context).pop();
+                                },
+                              ).buildUnsuccessfulScreen(context);
+                            }
+                          } catch (e) {
+                            // Handle exceptions during the redeem process
+                            Navigator.of(context).pop(); // Close loading dialog
+                            print("Error during voucher process: $e"); // Log the error
                             DialogUnsuccessful(
-                              headertext: "Redemption Failed!",
-                              subtext: "An error occurred while redeeming the voucher.",
+                              headertext: "Error!",
+                              subtext: "An error occurred. Please try again.",
                               textButton: "Okay",
                               callback: () {
                                 Navigator.of(context).pop();
@@ -284,9 +330,10 @@ class _VoucherPageState extends State<VoucherPage> {
                             ).buildUnsuccessfulScreen(context);
                           }
                         } else {
+                          Navigator.of(context).pop(); // Close loading dialog
                           DialogUnsuccessful(
-                            headertext: "Not Logged In!",
-                            subtext: "You need to be logged in to redeem a voucher.",
+                            headertext: "Error!",
+                            subtext: "User not found. Please log in again.",
                             textButton: "Okay",
                             callback: () {
                               Navigator.of(context).pop();
@@ -294,45 +341,45 @@ class _VoucherPageState extends State<VoucherPage> {
                           ).buildUnsuccessfulScreen(context);
                         }
                       },
-                    ).build(context);
+                    );
+
+                    dialogInfo.build(context);
                   },
                 );
               },
             ),
-          ),
+          )
         ],
       ),
     );
   }
 }
 
-
 String generateVoucherCode(int length) {
-    const String chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-    Random random = Random();
-    return List.generate(length, (index) => chars[random.nextInt(chars.length)]).join('');
-  }
+  const String chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+  Random random = Random();
+  return List.generate(length, (index) => chars[random.nextInt(chars.length)]).join('');
+}
 
-  String getFormattedDay(DateTime date) {
-    return "Day ${date.day}";
-  }
+String getFormattedDay(DateTime date) {
+  return "Day ${date.day}";
+}
 
-  List<VoucherType> acadVouchs() {
-    return [
-      VoucherType("KAHEL HOTEL", "10% off", "upon booking"),
-      VoucherType("KAHEL HOTEL", "10% off", "upon booking"),
-    ];
-  }
+List<VoucherType> acadVouchs() {
+  return [
+    VoucherType("KAHEL HOTEL", "10% off", "upon booking"),
+    VoucherType("KAHEL HOTEL", "10% off", "upon booking"),
+  ];
+}
 
-  List<DailyRewards> dailyRewards() {
-    return [
-      DailyRewards("Day 1", "+5 Koins"),
-      DailyRewards("Day 2", "+5 Koins"),
-      DailyRewards("Day 3", "+5 Koins"),
-      DailyRewards("Day 4", "+5 Koins"),
-    ];
-  }
-
+List<DailyRewards> dailyRewards() {
+  return [
+    DailyRewards("Day 1", "+5 Koins"),
+    DailyRewards("Day 2", "+5 Koins"),
+    DailyRewards("Day 3", "+5 Koins"),
+    DailyRewards("Day 4", "+5 Koins"),
+  ];
+}
 
 class VoucherType {
   final String holderName;
