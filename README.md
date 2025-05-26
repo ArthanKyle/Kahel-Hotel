@@ -1,16 +1,51 @@
-# kahel
+# 🐾 Kahel Hotel
 
-our application for ITE 351 New Ventures subject.
+A smart pet hotel companion app that ensures top-tier care, real-time updates, and loyalty rewards.
 
-## Getting Started
+## 📱 About the App
 
-This project is a starting point for a Flutter application.
+**Kahel Hotel** redefines the pet boarding experience by combining premium pet care with smart technology. Built with Flutter, the app connects pet owners to their pets through real-time monitoring, activity updates, and a seamless booking system.
 
-A few resources to get you started if this is your first Flutter project:
+It also introduces a unique loyalty program using cryptocurrency—allowing users to earn, stake, and redeem tokens for hotel perks and discounts.
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+## ✨ Key Features
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+- 🐶 **Pet Monitoring**: Real-time updates on pet activity and care
+- 🛰️ **GPS Tracking**: Location safety for pets in outdoor areas
+- 🧼 **Hotel Services**: Browse, book, and manage suite and play area reservations
+- 💰 **Crypto Loyalty Program**: Earn and use tokens for rewards or staking
+- 🔔 **Smart Notifications**: Receive care logs, feeding times, and updates from staff
+- 📊 **Pet Profile**: View pet details, vaccination history, and service history
+
+## 💼 Project Team
+
+| Role                | Name                                   |
+|---------------------|----------------------------------------|
+| Project Manager     | **Ydeo, Arthan Kyle Job Estaris**      |
+| UI/UX Designer      | **Cheong, Zhi Angel Amella Coquia**    |
+| Assistant Developer | **Abalos, Aldrin John Nacino**         |
+| Document Writer     | **Cendaña, Mary Andreana Caballero**   |
+
+## 🛠️ Tech Stack
+
+- **Framework**: Flutter
+- **Languages**: Dart
+- **Platform**: Android (iOS support optional)
+- **Backend**: Firebase (or your preferred backend)
+- **Crypto Integration**: (e.g., ERC-20, BSC, or placeholder logic)
+
+## 🚀 Getting Started
+
+### Prerequisites
+
+- Flutter SDK (latest stable version)
+- Android Studio or VS Code
+- A physical or virtual Android device
+
+### Installation
+
+```bash
+git clone https://github.com/yourusername/kahel-hotel-app.git
+cd kahel-hotel-app
+flutter pub get
+flutter run
