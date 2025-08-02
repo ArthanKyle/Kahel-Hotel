@@ -31,7 +31,7 @@ It also introduces a unique loyalty program using cryptocurrency—allowing user
 - **Framework**: Flutter
 - **Languages**: Dart
 - **Platform**: Android (iOS support optional)
-- **Backend**: Firebase (or your preferred backend)
+- **Backend**: Firebase 
 - **Crypto Integration**: (e.g., ERC-20, BSC, or placeholder logic)
 
 ## 🚀 Getting Started
